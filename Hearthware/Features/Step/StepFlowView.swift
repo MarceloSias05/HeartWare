@@ -208,5 +208,5 @@ struct WithYouView: View {
 
 #Preview {
     StepFlowView(idea: Goal.stairs.steps[1])
-        .environment(AppModel(preview: true))
+        .environment(AppModel.preview())
 }

@@ -106,5 +106,5 @@ struct FearDots: View {
 
 #Preview {
     NavigationStack { StoryView() }
-        .environment(AppModel(preview: true))
+        .environment(AppModel.preview())
 }

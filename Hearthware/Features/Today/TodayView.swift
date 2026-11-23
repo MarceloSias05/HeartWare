@@ -113,5 +113,5 @@ struct TodayView: View {
 
 #Preview {
     TodayView()
-        .environment(AppModel(preview: true))
+        .environment(AppModel.preview())
 }

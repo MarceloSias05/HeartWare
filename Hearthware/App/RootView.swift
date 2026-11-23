@@ -1,5 +1,5 @@
 //
-//  ContentView.swift
+//  RootView.swift
 //  Hearthware
 //
 //  Two tabs only: Today and Your story. Help is always one tap away from Today.
@@ -8,7 +8,7 @@
 
 import SwiftUI
 
-struct ContentView: View {
+struct RootView: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
@@ -28,11 +28,11 @@ struct ContentView: View {
 }
 
 #Preview("App") {
-    ContentView()
-        .environment(AppModel(preview: true))
+    RootView()
+        .environment(AppModel.preview())
 }
 
 #Preview("Onboarding") {
-    ContentView()
-        .environment(AppModel(preview: false))
+    RootView()
+        .environment(AppModel.preview(sample: false))
 }

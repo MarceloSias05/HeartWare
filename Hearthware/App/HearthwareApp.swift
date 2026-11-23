@@ -13,7 +13,7 @@ struct HearthwareApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
                 .environment(model)
         }
     }
