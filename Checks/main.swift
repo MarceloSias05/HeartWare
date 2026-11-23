@@ -28,6 +28,16 @@ check(Goal.other.steps.first?.title == "Try it for a few minutes", "otherGoalHas
 check(Profile(name: "A", goal: .other, customGoal: "Gardening", condition: .other).goalTitle == "Gardening", "goalTitleUsesCustomText")
 check(Profile(name: "A", goal: .market, customGoal: nil, condition: .other).goalTitle == Goal.market.title, "goalTitleForListedGoal")
 
+// Watch result + recovery
+let end0 = Date(timeIntervalSince1970: 0)
+check(Recovery.seconds(baseline: 80, endedAt: end0, samples: [(end0 + 30, 120), (end0 + 65, 88), (end0 + 90, 80)]) == 65, "recoveryFirstSampleBackNearBaseline")
+check(Recovery.seconds(baseline: 80, endedAt: end0, samples: [(end0 + 60, 110), (end0 + 130, 82)]) == nil, "recoveryNilWhenNeverBackInWindow")
+let end100 = Date(timeIntervalSince1970: 100)
+check(Recovery.seconds(baseline: 80, endedAt: end100, samples: [(end100 - 5, 81), (end100 + 40, 85)]) == 40, "recoveryIgnoresSamplesBeforeEnd")
+check(Recovery.seconds(baseline: 80, endedAt: end0, samples: []) == nil, "recoveryNilWithoutSamples")
+let wr = WatchResult(peakHeartRate: 112, recoverySeconds: 65)
+check((try? JSONDecoder().decode(WatchResult.self, from: JSONEncoder().encode(wr))) == wr, "watchResultRoundTripsJSON")
+
 // AppModel + SwiftData
 MainActor.assumeIsolated {
     let m = AppModel(container: .empty)
@@ -44,6 +54,13 @@ MainActor.assumeIsolated {
     let s = AppModel(container: .empty)
     s.log(title: "a", before: .calm, after: .calm); s.log(title: "b", before: .calm, after: .calm)
     check(s.records.map(\.title) == ["a", "b"], "recordsAreOldestFirst")
+
+    let wm = AppModel(container: .empty)  // keep the model (and its container) alive while reading the record
+    let w = wm.log(title: "t", before: .nervous, after: .calm, watch: WatchResult(peakHeartRate: 112, recoverySeconds: 65))
+    check(w.peakHeartRate == 112 && w.recoverySeconds == 65, "logStoresWatchValues")
+    let nwm = AppModel(container: .empty)
+    let nw = nwm.log(title: "t", before: .nervous, after: .calm)
+    check(nw.peakHeartRate == nil && nw.recoverySeconds == nil, "logWithoutWatchLeavesNil")
 }
 
 print(failures == 0 ? "all checks OK" : "\(failures) check(s) failed")

@@ -44,8 +44,9 @@ final class AppModel {
     }
 
     @discardableResult
-    func log(title: String, before: Feeling, after: Feeling) -> StepRecord {
-        let record = StepRecord(date: .now, title: title, before: before, after: after)
+    func log(title: String, before: Feeling, after: Feeling, watch: WatchResult? = nil) -> StepRecord {
+        let record = StepRecord(date: .now, title: title, before: before, after: after,
+                                peakHeartRate: watch?.peakHeartRate, recoverySeconds: watch?.recoverySeconds)
         context.insert(record)
         save()
         return record
