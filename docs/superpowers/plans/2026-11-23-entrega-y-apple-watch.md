@@ -24,7 +24,11 @@
 | B | B1 Target de tests | ⏭️ Saltada: los chequeos corren con `Checks/run.sh` (21 chequeos, todos pasan) |
 | B | B2 SwiftData | ✅ Hecha: `6f1c805`, en `main` |
 | B | B3 Onboarding nombre + "Other" | ✅ Hecha: `6bc62bd`, en `main` (falta probarla a mano en el simulador) |
-| C | C1–C5 Apple Watch | 🔜 Siguiente |
+| C | C1 WatchResult + recuperación | ✅ Hecha: `ed7e629` (rama `feat/apple-watch`) |
+| C | C2 Target de watchOS | ❌ Falta crearlo en Xcode (lo hace Marcelo) |
+| C | C3 Sesión en el Watch | 🟡 Código escrito y con tipos revisados contra el SDK de watchOS (`daa7ead`); sin target ni prueba en un Watch |
+| C | C4 iPhone ↔ Watch | 🟡 El lado del iPhone compila y tiene respaldo sin Watch (`9aca6cc`); falta probarlo con un Watch real |
+| C | C5 TestFlight build 2 | ❌ Pendiente |
 
 **Entregables hoy:**
 - **App Name:** sin decidir (Heartware / Hearthware).
@@ -40,7 +44,10 @@
 - El resumen para el doctor y el PDF muestran también la meta ("Goal: <goalTitle>"), para que la meta escrita en "Other" sirva de algo.
 - El botón pill se ve atenuado cuando está deshabilitado.
 - Bundle ID actual: `com.marcelo.academy.Heartware`; team del target `N2TLVFPKL4`, pero el proyecto todavía dice `VWUWR4BNBX`. Hay que unificarlos antes de archivar.
-- Si la Parte C no llega a la entrega, cambiar "Start on Apple Watch" y "Your Watch taps your wrist…" en `StepFlowView.swift`: hoy prometen un Watch que no existe.
+- El texto ya no promete un Watch que no existe: sin Watch, el botón dice "Start your step" y `WithYouView` dice "Take it at your own pace".
+- El iPhone abre la app del Watch con `HKHealthStore.startWatchApp` y le pasa el paso por application context. Cada paso tiene un id, y se ignora cualquier resultado o cancelación de otro paso.
+- No hay "Slow down" automático: A1 sigue sin decidirse y el plan recomienda no avisar.
+- `WatchResult.swift` vive en `Shared/`, con membresía de carpeta en `project.xcproj`. `WatchLink` vive en `Hearthware/Services/`.
 
 ## Global Constraints
 
