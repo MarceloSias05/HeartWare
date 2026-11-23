@@ -32,6 +32,7 @@
 | C | C6 Datos de Apple Health en el resumen (pedido por Marcelo) | ✅ Hecha: `a137eec`. Corazón + movimiento/cansancio, "30 días antes de unirse" contra "últimos 7 días" con % de cambio; el preview del PDF quedó arreglado. Sin probar con datos reales de Salud |
 | C | C7 PDF con sentido (pedido por Marcelo) | ✅ Hecha: `18c616f` en `feat/pdf-summary`. At a glance, miedo y escalón, síntomas guardados (antes la ayuda no guardaba nada) con aviso de una hora después, fechas de cada columna, varias páginas |
 | C | C8 Gráficas en el PDF (Swift Charts) | ✅ Hecha: `1742520` en `feat/pdf-charts`. Página "Trends": miedo antes/después, pulso máximo por paso, y día por día de pasos, pulso en reposo, presión, HRV, velocidad al caminar y oxígeno, con línea del día en que se unió |
+| C | C9 Párrafo para el doctor con Foundation Models | ✅ Hecha en `feat/pdf-charts`. Apple Intelligence en el iPhone escribe 3–4 frases solo con los datos del PDF; si no está disponible, no hay párrafo. Agregar **FoundationModels** y **Swift Charts** a la lista de Frameworks de la entrega |
 
 **Entregables hoy:**
 - **App Name:** sin decidir (Heartware / Hearthware).
