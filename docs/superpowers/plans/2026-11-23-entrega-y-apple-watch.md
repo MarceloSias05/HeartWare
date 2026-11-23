@@ -33,6 +33,7 @@
 | C | C7 PDF con sentido (pedido por Marcelo) | ✅ Hecha: `18c616f` en `feat/pdf-summary`. At a glance, miedo y escalón, síntomas guardados (antes la ayuda no guardaba nada) con aviso de una hora después, fechas de cada columna, varias páginas |
 | C | C8 Gráficas en el PDF (Swift Charts) | ✅ Hecha: `1742520` en `feat/pdf-charts`. Página "Trends": miedo antes/después, pulso máximo por paso, y día por día de pasos, pulso en reposo, presión, HRV, velocidad al caminar y oxígeno, con línea del día en que se unió |
 | C | C9 Párrafo para el doctor con Foundation Models | ✅ Hecha en `feat/pdf-charts`. Apple Intelligence en el iPhone escribe 3–4 frases solo con los datos del PDF; si no está disponible, no hay párrafo. Agregar **FoundationModels** y **Swift Charts** a la lista de Frameworks de la entrega |
+| C | C10 Sentimiento con cara y slider (pedido por Marcelo) | ✅ Hecha en `feat/feeling-slider` (desde main). `FeelingPage`: cara que cambia de asustada a tranquila, fondo ámbar → menta, palabra grande, slider que se ajusta a 4 sentimientos, háptica y VoiceOver. Reemplaza la lista antes y después del paso |
 
 **Entregables hoy:**
 - **App Name:** sin decidir (Heartware / Hearthware).
