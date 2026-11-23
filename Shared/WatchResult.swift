@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct WatchResult: Codable, Equatable, Sendable {
+nonisolated struct WatchResult: Codable, Equatable, Sendable {
     var peakHeartRate: Int?
     var recoverySeconds: Int?
 }
