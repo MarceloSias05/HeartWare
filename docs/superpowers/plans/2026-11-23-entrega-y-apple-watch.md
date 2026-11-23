@@ -171,7 +171,8 @@ El link público de TestFlight no cambia entre builds. Se puede hacer antes de l
 - [ ] **Step 3:** Implementar `OnboardingInput`, `Goal.other` y las pantallas. `finish()` llama a `model.completeOnboarding(name: input.trimmedName, goal: input.goal, customGoal: input.trimmedCustomGoal, condition: input.condition)`.
 - [ ] **Step 4:** Correr → PASS (18 tests).
 - [ ] **Step 5:** En el simulador, con VoiceOver y Dynamic Type XXL: el campo de nombre tiene etiqueta, el teclado no tapa "Continue" y con "Something else" + "Gardening" el resumen y la Story muestran "Gardening".
-- [ ] **Step 6:** Commit: `"Onboarding asks for name and allows a custom goal"`.
+- [ ] **Step 6:** El nombre escrito sale en todas partes: `grep -rn "model.name\|profile.name" Hearthware` lista Today ("Good morning, <name>"), `DoctorSummaryView` y `DoctorPDFPage`. Exportar el PDF del resumen y confirmar que el encabezado dice el nombre del onboarding.
+- [ ] **Step 7:** Commit: `"Onboarding asks for name and allows a custom goal"`.
 
 ---
 
