@@ -90,11 +90,11 @@ struct OnboardingView: View {
     }
 
     private func finish() {
-        model.completeOnboarding(goal: goal, condition: condition)
+        model.completeOnboarding(name: "", goal: goal, customGoal: nil, condition: condition) // replaced in B3
     }
 }
 
 #Preview {
     OnboardingView()
-        .environment(AppModel.preview(sample: false))
+        .environment(AppModel(container: .empty))
 }

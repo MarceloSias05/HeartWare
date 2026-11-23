@@ -27,12 +27,7 @@ struct RootView: View {
     }
 }
 
-#Preview("App") {
+#Preview {
     RootView()
-        .environment(AppModel.preview())
-}
-
-#Preview("Onboarding") {
-    RootView()
-        .environment(AppModel.preview(sample: false))
+        .environment(AppModel(container: .empty))
 }

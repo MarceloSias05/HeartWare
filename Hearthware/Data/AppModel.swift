@@ -2,57 +2,63 @@
 //  AppModel.swift
 //  Hearthware
 //
-//  The single source of truth the views observe. Holds the state, exposes the
-//  Coach's answers, and is the only place that changes or saves anything.
+//  The single source of truth the views observe. Reads the profile and steps from
+//  SwiftData, exposes the Coach's answers, and is the only place that writes.
 //
 
-import Observation
 import Foundation
+import Observation
+import SwiftData
 
-@Observable
+@MainActor @Observable
 final class AppModel {
-    var name: String = "Marco"
-    private(set) var state: SavedState { didSet { store?.save(state) } }
+    /// Kept so the container outlives the context (a context does not retain it).
+    private let container: ModelContainer
+    private var context: ModelContext { container.mainContext }
+    private(set) var profile: Profile?
+    private(set) var records: [StepRecord] = []
 
-    /// nil = nothing is saved (previews, demo).
-    private let store: StateStore?
-
-    init(store: StateStore? = StateStore()) {
-        self.store = store
-        self.state = store?.load() ?? SavedState()
-    }
-
-    /// In-memory model for previews: never touches the real saved story.
-    static func preview(sample: Bool = true) -> AppModel {
-        let model = AppModel(store: nil)
-        if sample { model.state = .sample }
-        return model
+    init(container: ModelContainer) {
+        self.container = container
+        reload()
     }
 
     // MARK: Read
 
-    var goal: Goal? { state.goal }
-    var condition: HeartCondition? { state.condition }
-    var records: [StepRecord] { state.records }
-    var hasOnboarded: Bool { state.hasOnboarded }
+    var hasOnboarded: Bool { profile != nil }
+    var name: String { profile?.name ?? "" }
+    var goal: Goal? { profile?.goal }
+    var condition: HeartCondition? { profile?.condition }
 
-    var todayStep: StepIdea { Coach.nextStep(goal: state.goal, records: state.records) }
-    var todayState: DayState { Coach.dayState(records: state.records) }
-    var fearIsShrinking: Bool { Coach.fearIsShrinking(records: state.records) }
+    var todayStep: StepIdea { Coach.nextStep(goal: goal, records: records) }
+    var todayState: DayState { Coach.dayState(records: records) }
+    var fearIsShrinking: Bool { Coach.fearIsShrinking(records: records) }
     func explanation(for record: StepRecord) -> String { Coach.explanation(for: record) }
 
     // MARK: Intents
 
-    func completeOnboarding(goal: Goal, condition: HeartCondition) {
-        state.goal = goal
-        state.condition = condition
-        state.hasOnboarded = true
+    func completeOnboarding(name: String, goal: Goal, customGoal: String?, condition: HeartCondition) {
+        context.insert(Profile(name: name, goal: goal, customGoal: customGoal, condition: condition))
+        save()
     }
 
     @discardableResult
     func log(title: String, before: Feeling, after: Feeling) -> StepRecord {
         let record = StepRecord(date: .now, title: title, before: before, after: after)
-        state.records.append(record)
+        context.insert(record)
+        save()
         return record
+    }
+
+    // MARK: Storage
+
+    private func save() {
+        do { try context.save() } catch { assertionFailure("Could not save: \(error)") }
+        reload()
+    }
+
+    private func reload() {
+        profile = (try? context.fetch(FetchDescriptor<Profile>(sortBy: [SortDescriptor(\.createdAt)])))?.last
+        records = (try? context.fetch(FetchDescriptor<StepRecord>(sortBy: [SortDescriptor(\.date)]))) ?? []
     }
 }

@@ -119,5 +119,5 @@ struct DoctorPDFPage: View {
     NavigationStack {
         DoctorSummaryView()
     }
-    .environment(AppModel.preview())
+    .environment(AppModel(container: .empty))
 }
