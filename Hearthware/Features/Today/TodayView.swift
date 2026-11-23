@@ -114,4 +114,5 @@ struct TodayView: View {
 #Preview {
     TodayView()
         .environment(AppModel(container: .empty))
+        .environment(WatchLink())
 }

@@ -11,6 +11,7 @@ import SwiftData
 @main
 struct HearthwareApp: App {
     @State private var model: AppModel
+    @State private var watchLink = WatchLink()
 
     init() {
         // try! on purpose: without its store the app cannot do anything useful.
@@ -22,6 +23,8 @@ struct HearthwareApp: App {
         WindowGroup {
             RootView()
                 .environment(model)
+                .environment(watchLink)
+                .task { watchLink.activate() }
         }
     }
 }

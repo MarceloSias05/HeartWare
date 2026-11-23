@@ -37,6 +37,11 @@ check(Recovery.seconds(baseline: 80, endedAt: end100, samples: [(end100 - 5, 81)
 check(Recovery.seconds(baseline: 80, endedAt: end0, samples: []) == nil, "recoveryNilWithoutSamples")
 let wr = WatchResult(peakHeartRate: 112, recoverySeconds: 65)
 check((try? JSONDecoder().decode(WatchResult.self, from: JSONEncoder().encode(wr))) == wr, "watchResultRoundTripsJSON")
+check(WatchMessage.result(from: WatchMessage.resultPayload(step: "s1", result: wr))?.step == "s1", "resultPayloadKeepsStep")
+check(WatchMessage.result(from: WatchMessage.resultPayload(step: "s1", result: wr))?.result == wr, "resultPayloadKeepsValues")
+check(WatchMessage.result(from: ["kind": "cancel"]) == nil, "cancelIsNotAResult")
+check(WatchMessage.result(from: ["kind": "result", "step": "s1", "result": Data("x".utf8)]) == nil, "garbageResultIsIgnored")
+check(WatchMessage.start(from: WatchMessage.startContext(step: "s2", title: "Walk")).map { "\($0.step)|\($0.title)" } == "s2|Walk", "startContextRoundTrips")
 
 // AppModel + SwiftData
 MainActor.assumeIsolated {

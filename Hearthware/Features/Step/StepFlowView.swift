@@ -2,8 +2,8 @@
 //  StepFlowView.swift
 //  Hearthware
 //
-//  Before → (ask your doctor, for big steps) → with you → after → what your body did.
-//  "With you" stands in for the Apple Watch until the Watch app is added.
+//  Before → (ask your doctor, for big steps) → on your Watch, or with you on the iPhone
+//  when there is no Watch → after → what your body did.
 //
 
 import SwiftUI
@@ -12,14 +12,16 @@ struct StepFlowView: View {
     let idea: StepIdea
 
     @Environment(AppModel.self) private var model
+    @Environment(WatchLink.self) private var watchLink
     @Environment(\.dismiss) private var dismiss
 
-    enum Phase { case before, askDoctor, withYou, after, result }
+    enum Phase { case before, askDoctor, onWatch, withYou, after, result }
 
     @State private var phase: Phase = .before
     @State private var before: Feeling = .nervous
     @State private var after: Feeling = .calm
     @State private var record: StepRecord?
+    @State private var watchResult: WatchResult?
 
     var body: some View {
         NavigationStack {
@@ -27,6 +29,7 @@ struct StepFlowView: View {
                 switch phase {
                 case .before: beforeView
                 case .askDoctor: askDoctorView
+                case .onWatch: OnWatchView { watchLink.cancel(); phase = .after }
                 case .withYou: WithYouView { phase = .after }
                 case .after: afterView
                 case .result: resultView
@@ -47,7 +50,22 @@ struct StepFlowView: View {
                 }
             }
         }
-        .interactiveDismissDisabled(phase == .withYou)
+        .interactiveDismissDisabled(phase == .withYou || phase == .onWatch)
+        .onAppear {
+            watchLink.onResult = { result in
+                watchResult = result
+                if phase == .onWatch { phase = .after }
+            }
+        }
+        .onDisappear {
+            if phase == .onWatch { watchLink.cancel() }
+            watchLink.onResult = nil
+        }
+    }
+
+    /// Runs the step on the Watch when it can, otherwise on the iPhone.
+    private func begin() {
+        Task { phase = await watchLink.start(title: idea.title) ? .onWatch : .withYou }
     }
 
     // MARK: Before
@@ -58,8 +76,8 @@ struct StepFlowView: View {
             title: idea.title,
             subtitle: idea.hint,
             footnote: "There is no wrong answer. Feeling scared is normal.",
-            buttonTitle: "Start on Apple Watch",
-            action: { phase = idea.bigStep ? .askDoctor : .withYou }
+            buttonTitle: watchLink.canUseWatch ? "Start on Apple Watch" : "Start your step",
+            action: { if idea.bigStep { phase = .askDoctor } else { begin() } }
         ) {
             Text("How do you feel about it?")
                 .font(.title3.bold())
@@ -92,7 +110,7 @@ struct StepFlowView: View {
                 .padding(.top, 10)
             Spacer(minLength: 24)
             VStack(spacing: 12) {
-                Button("My doctor said it's OK") { phase = .withYou }
+                Button("My doctor said it's OK") { begin() }
                     .buttonStyle(.pill)
                 Button("Choose a gentler step") { dismiss() }
                     .buttonStyle(.pillSecondary)
@@ -112,7 +130,7 @@ struct StepFlowView: View {
             footnote: nil,
             buttonTitle: "See what your body did",
             action: {
-                record = model.log(title: idea.title, before: before, after: after)
+                record = model.log(title: idea.title, before: before, after: after, watch: watchResult)
                 phase = .result
             }
         ) {
@@ -177,7 +195,31 @@ struct StepFlowView: View {
     }
 }
 
-/// Stand-in for the Apple Watch screen while the step happens.
+/// While the step happens on the Watch. "End step here" is the way out if the Watch stops answering.
+struct OnWatchView: View {
+    let onEndHere: () -> Void
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Spacer()
+            OrbView(calm: true, size: 180)
+            Text("Follow your Watch")
+                .font(.title.bold())
+                .padding(.top, 24)
+            Text("It keeps you company while you move. Tap End step on your wrist when you're done.")
+                .foregroundStyle(Color.hwSecondary)
+                .multilineTextAlignment(.center)
+            Spacer()
+            Button("End step here", action: onEndHere)
+                .buttonStyle(.pillSecondary)
+        }
+        .padding(.horizontal, 20)
+        .padding(.bottom, 8)
+        .accessibilityElement(children: .contain)
+    }
+}
+
+/// The step on the iPhone alone, when there is no Watch to run it.
 struct WithYouView: View {
     let onEnd: () -> Void
     @State private var slowDown = false
@@ -189,7 +231,7 @@ struct WithYouView: View {
             Text(slowDown ? "Slow down a little" : "You're doing well")
                 .font(.title.bold())
                 .padding(.top, 24)
-            Text(slowDown ? "Rest on the landing. Take a breath." : "Your Watch taps your wrist to keep you company. Stop anytime.")
+            Text(slowDown ? "Rest on the landing. Take a breath." : "Take it at your own pace. Stop anytime.")
                 .foregroundStyle(Color.hwSecondary)
                 .multilineTextAlignment(.center)
             Spacer()
@@ -209,4 +251,5 @@ struct WithYouView: View {
 #Preview {
     StepFlowView(idea: Goal.stairs.steps[1])
         .environment(AppModel(container: .empty))
+        .environment(WatchLink())
 }
