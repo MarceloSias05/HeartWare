@@ -29,6 +29,7 @@
 | C | C3 Sesión en el Watch | 🟡 Compila en el target. No se ha corrido: no hay runtime de simulador de watchOS en la Mac, y el pulso real solo se prueba en un Watch |
 | C | C4 iPhone ↔ Watch | 🟡 El lado del iPhone compila y tiene respaldo sin Watch (`9aca6cc`); falta probarlo con un Watch real |
 | C | C5 TestFlight build 2 | ❌ Pendiente |
+| C | C6 Datos de Apple Health en el resumen (pedido por Marcelo) | ✅ Hecha: `a137eec`. Corazón + movimiento/cansancio, "30 días antes de unirse" contra "últimos 7 días" con % de cambio; el preview del PDF quedó arreglado. Sin probar con datos reales de Salud |
 
 **Entregables hoy:**
 - **App Name:** sin decidir (Heartware / Hearthware).
@@ -37,7 +38,7 @@
 - **App Summary Template:** ❌ falta llenarlo.
 - **Git:** https://github.com/MarceloSias05/Hearthware (privado).
 - **TestFlight:** ❌ falta.
-- **Frameworks hoy:** SwiftUI, Observation, SwiftData. Con la Parte C: + HealthKit, WatchConnectivity, WatchKit.
+- **Frameworks hoy:** SwiftUI, Observation, SwiftData, HealthKit, WatchConnectivity, WatchKit.
 
 **Cambios respecto al plan original (decididos al implementar):**
 - `AppModel.init(container: ModelContainer)` en vez de `init(context:)`, y la clase es `@MainActor`: un `ModelContext` no retiene a su contenedor, así que `ModelContainer.empty.mainContext` tronaba en el primer fetch. Previews y chequeos usan `AppModel(container: .empty)`.
