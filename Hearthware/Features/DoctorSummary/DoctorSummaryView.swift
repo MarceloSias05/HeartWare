@@ -10,7 +10,7 @@ import SwiftUI
 struct DoctorSummaryView: View {
     @Environment(AppModel.self) private var model
     @State private var pdfURL: URL?
-    @State private var preview: UIImage?
+    @State private var previews: [UIImage] = []
 
     var body: some View {
         ScrollView {
@@ -18,22 +18,25 @@ struct DoctorSummaryView: View {
                 Text("Everything your doctor needs, numbers included. You don't have to read them.")
                     .foregroundStyle(Color.hwSecondary)
                 Container {
-                    // An image of the real page, so the preview always matches the PDF and fits any width.
-                    Group {
-                        if let preview {
-                            Image(uiImage: preview)
-                                .resizable()
-                                .scaledToFit()
-                                .clipShape(.rect(cornerRadius: 6))
-                                .shadow(color: .black.opacity(0.12), radius: 8, y: 4)
-                        } else {
-                            ProgressView("Reading Apple Health…")
-                                .frame(maxWidth: .infinity, minHeight: 240)
+                    // Images of the real pages, so the preview always matches the PDF and fits any width.
+                    if previews.isEmpty {
+                        ProgressView("Reading Apple Health…")
+                            .frame(maxWidth: .infinity, minHeight: 240)
+                    } else {
+                        VStack(spacing: 16) {
+                            ForEach(previews.indices, id: \.self) { i in
+                                Image(uiImage: previews[i])
+                                    .resizable()
+                                    .scaledToFit()
+                                    .clipShape(.rect(cornerRadius: 6))
+                                    .shadow(color: .black.opacity(0.12), radius: 8, y: 4)
+                            }
                         }
                     }
                 }
                 .padding(.top, 20)
-                .accessibilityLabel("Preview of the summary for your doctor")
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Preview of the summary for your doctor, \(previews.count) pages")
             }
             .padding(.horizontal, 16)
         }
@@ -53,102 +56,181 @@ struct DoctorSummaryView: View {
             .padding(.bottom, 8)
         }
         .task {
-            let health = await HealthHistory.report(joined: model.profile?.createdAt ?? .now)
-            let page = DoctorPDFPage(name: model.name, condition: model.condition, goal: model.goalTitle,
-                                     records: model.records, health: health)
-            let renderer = ImageRenderer(content: page)
-            renderer.scale = 2
-            preview = renderer.uiImage
-            pdfURL = makePDF(page)
+            let now = Date.now
+            let joined = model.profile?.createdAt ?? now
+            let summary = DoctorSummary(
+                name: model.name, condition: model.condition, goal: model.goal, goalTitle: model.goalTitle,
+                joined: joined, generated: now, records: model.records, symptoms: model.symptoms,
+                health: await HealthHistory.report(joined: joined, now: now))
+            let pages = (0..<summary.pageCount).map { DoctorPDFPage(summary: summary, page: $0) }
+            previews = pages.compactMap { page in
+                let renderer = ImageRenderer(content: page)
+                renderer.scale = 2
+                return renderer.uiImage
+            }
+            pdfURL = makePDF(pages)
         }
     }
 
-    private func makePDF(_ page: DoctorPDFPage) -> URL? {
+    private func makePDF(_ pages: [DoctorPDFPage]) -> URL? {
         let url = URL.temporaryDirectory.appending(path: "Hearthware summary.pdf")
-        let renderer = ImageRenderer(content: page)
-        var ok = false
-        renderer.render { _, draw in
-            var box = CGRect(x: 0, y: 0, width: 595, height: 842)
-            guard let context = CGContext(url as CFURL, mediaBox: &box, nil) else { return }
-            context.beginPDFPage(nil)
-            draw(context)
-            context.endPDFPage()
-            context.closePDF()
-            ok = true
+        var box = CGRect(x: 0, y: 0, width: DoctorPDFPage.width, height: DoctorPDFPage.height)
+        guard let context = CGContext(url as CFURL, mediaBox: &box, nil) else { return nil }
+        for page in pages {
+            ImageRenderer(content: page).render { _, draw in
+                context.beginPDFPage(nil)
+                draw(context)
+                context.endPDFPage()
+            }
         }
-        return ok ? url : nil
+        context.closePDF()
+        return url
     }
 }
 
-/// A4 page for the doctor. Plain, dense, printable.
-struct DoctorPDFPage: View {
-    let name: String
-    let condition: HeartCondition?
-    let goal: String?
-    let records: [StepRecord]
+/// Everything the summary shows, gathered once.
+struct DoctorSummary {
+    var name: String
+    var condition: HeartCondition?
+    var goal: Goal?
+    var goalTitle: String?
+    var joined: Date
+    var generated: Date
+    var records: [StepRecord]
+    var symptoms: [SymptomRecord]
     var health: HealthReport?
 
-    /// Keeps the page to one A4 sheet.
-    private static let maxStepRows = 10
+    /// Steps table rows: the first part shares page 2 with the movement table.
+    static let stepsOnFirstPage = 30
+    static let stepsPerPage = 45
+    /// Most recent symptoms listed on page 1.
+    static let maxSymptoms = 10
+
+    var stepPages: [Range<Int>] {
+        SummaryFacts.stepPages(count: records.count, first: Self.stepsOnFirstPage, rest: Self.stepsPerPage)
+    }
+    var pageCount: Int { 1 + stepPages.count }
+    var windows: (before: DateInterval, recent: DateInterval) { HealthReport.windows(joined: joined, now: generated) }
+}
+
+/// One A4 page for the doctor. Plain, dense, printable.
+struct DoctorPDFPage: View {
+    static let width: CGFloat = 595
+    static let height: CGFloat = 842
+
+    let summary: DoctorSummary
+    let page: Int
+
+    private let grey = Color(white: 0.42)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
-            Text("HEARTWARE  ·  PATIENT SUMMARY")
-                .font(.system(size: 10, weight: .bold)).kerning(1)
-                .foregroundStyle(Color(white: 0.42))
-            Text(name).font(.system(size: 24, weight: .bold))
-            Text("\(condition?.title ?? "Heart condition")  ·  Goal: \(goal ?? "Not set")  ·  \(records.count) steps logged  ·  Created by the patient")
-                .font(.system(size: 11)).foregroundStyle(Color(white: 0.42))
-            Divider()
-            if let health {
-                healthTable("Heart", health.shown(in: .heart))
-                healthTable("Movement and tiredness", health.shown(in: .movement))
-            }
-            Text(records.count > Self.maxStepRows ? "Steps taken (last \(Self.maxStepRows) of \(records.count))" : "Steps taken")
-                .font(.system(size: 13, weight: .bold))
-            Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 3) {
-                GridRow {
-                    ForEach(["Date", "Step", "Fear before", "Fear after", "Peak HR", "Back to rest"], id: \.self) {
-                        Text($0).font(.system(size: 9, weight: .semibold)).foregroundStyle(Color(white: 0.42))
-                    }
+            if page == 0 {
+                header
+                glance
+                patientReported
+                if let health = summary.health { healthTable("Heart", health.shown(in: .heart)) }
+            } else {
+                if page == 1, let health = summary.health {
+                    healthTable("Movement and tiredness", health.shown(in: .movement))
                 }
-                ForEach(records.suffix(Self.maxStepRows)) { r in
-                    GridRow {
-                        Text(r.date, format: .dateTime.day().month(.abbreviated))
-                        Text(r.title)
-                        Text(r.before.title)
-                        Text(r.after.title)
-                        Text(r.peakHeartRate.map { "\($0) bpm" } ?? "Not yet")
-                        Text(r.recoverySeconds.map { "\($0 / 60) min \($0 % 60) s" } ?? "Not yet")
-                    }
-                    .font(.system(size: 9))
-                }
+                stepsTable(summary.stepPages[page - 1])
             }
-            Divider()
-            Text("Values come from Apple Health and Apple Watch and may differ from clinical devices. Only measures with data are listed. Alerts read \"None\" when there were none or when they are not shared. This summary is not a diagnosis.")
-                .font(.system(size: 9))
-                .fixedSize(horizontal: false, vertical: true)
-                .foregroundStyle(Color(white: 0.42))
-            Spacer()
+            Spacer(minLength: 0)
+            footer
         }
         .padding(.horizontal, 44)
         .padding(.vertical, 36)
-        .frame(width: 595, height: 842, alignment: .topLeading)
+        .frame(width: Self.width, height: Self.height, alignment: .topLeading)
         .background(.white)
         .environment(\.colorScheme, .light)
         .foregroundStyle(.black)
     }
 
+    // MARK: Page 1
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("HEARTWARE  ·  PATIENT SUMMARY")
+                .font(.system(size: 10, weight: .bold)).kerning(1)
+                .foregroundStyle(grey)
+            Text(summary.name).font(.system(size: 24, weight: .bold))
+            Text("\(summary.condition?.title ?? "Heart condition")  ·  Goal: \(summary.goalTitle ?? "Not set")  ·  Created by the patient")
+                .font(.system(size: 11)).foregroundStyle(grey)
+            Text("Using Hearthware since \(day(summary.joined))  ·  Generated \(day(summary.generated))")
+                .font(.system(size: 11)).foregroundStyle(grey)
+            Divider()
+        }
+    }
+
+    private var glance: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("At a glance").font(.system(size: 13, weight: .bold))
+            ForEach(SummaryFacts.glance(report: summary.health, records: summary.records,
+                                        symptoms: summary.symptoms.count,
+                                        urgentSymptoms: summary.symptoms.filter(\.urgent).count), id: \.self) {
+                Text("•  \($0)").font(.system(size: 10))
+            }
+            Divider().padding(.top, 4)
+        }
+    }
+
+    private var patientReported: some View {
+        let ladder = SummaryFacts.ladderPosition(goal: summary.goal, records: summary.records)
+        let calm = summary.records.filter { $0.after.isCalm }.count
+        let shown = summary.symptoms.suffix(DoctorSummary.maxSymptoms)
+        return VStack(alignment: .leading, spacing: 4) {
+            Text("How the patient feels").font(.system(size: 13, weight: .bold))
+            Group {
+                if let fear = SummaryFacts.fearTrend(summary.records) {
+                    Text("Fear before a step: \(fear.first.title) at the first step, \(fear.last.title.lowercased()) at the latest.")
+                } else {
+                    Text("Fear before a step: not enough steps yet to show a change.")
+                }
+                Text("Progress: step \(ladder.rung) of \(ladder.total) towards \(summary.goalTitle ?? "their goal").  \(summary.records.count) steps logged, \(calm) ended calm or a little nervous.")
+            }
+            .font(.system(size: 10))
+            .fixedSize(horizontal: false, vertical: true)
+
+            Text(summary.symptoms.count > shown.count
+                 ? "Symptoms reported (last \(shown.count) of \(summary.symptoms.count))" : "Symptoms reported")
+                .font(.system(size: 10, weight: .semibold))
+                .padding(.top, 4)
+            if shown.isEmpty {
+                Text("None.").font(.system(size: 10))
+            } else {
+                Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 2) {
+                    ForEach(shown) { s in
+                        GridRow {
+                            Text(s.date, format: .dateTime.day().month(.abbreviated).hour().minute())
+                            Text(s.symptom)
+                            Text(s.urgent ? "Urgent: told to call 112" : "")
+                                .foregroundStyle(s.urgent ? Color(red: 0.75, green: 0, blue: 0.07) : .black)
+                        }
+                        .font(.system(size: 9))
+                    }
+                }
+            }
+            Divider().padding(.top, 4)
+        }
+    }
+
+    // MARK: Tables
+
     @ViewBuilder
     private func healthTable(_ title: String, _ rows: [MetricReading]) -> some View {
         if !rows.isEmpty {
+            let (before, recent) = summary.windows
             Text(title).font(.system(size: 13, weight: .bold))
             Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 2) {
                 GridRow {
-                    ForEach(["Measure", "\(HealthHistory.beforeDays) days before joining", "Last \(HealthHistory.recentDays) days", "Change"], id: \.self) {
-                        Text($0).font(.system(size: 9, weight: .semibold)).foregroundStyle(Color(white: 0.42))
-                    }
+                    Text("Measure")
+                    Text("Before joining\n\(range(before))")
+                    Text("Last \(HealthReport.recentDays) days\n\(range(recent))")
+                    Text("Change")
                 }
+                .font(.system(size: 9, weight: .semibold)).foregroundStyle(grey)
+                .fixedSize(horizontal: false, vertical: true)
                 ForEach(rows, id: \.metric) { r in
                     GridRow {
                         Text(r.metric.title)
@@ -161,6 +243,59 @@ struct DoctorPDFPage: View {
             }
             Divider()
         }
+    }
+
+    @ViewBuilder
+    private func stepsTable(_ rows: Range<Int>) -> some View {
+        let total = summary.records.count
+        Text(total == 0 ? "Steps taken" : "Steps taken (\(rows.lowerBound + 1)–\(rows.upperBound) of \(total))")
+            .font(.system(size: 13, weight: .bold))
+        if total == 0 {
+            Text("No steps logged yet.").font(.system(size: 10))
+        } else {
+            Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 3) {
+                GridRow {
+                    ForEach(["Date", "Step", "Fear before", "Fear after", "Peak HR", "Back to rest"], id: \.self) {
+                        Text($0).font(.system(size: 9, weight: .semibold)).foregroundStyle(grey)
+                    }
+                }
+                ForEach(summary.records[rows]) { r in
+                    GridRow {
+                        Text(r.date, format: .dateTime.day().month(.abbreviated))
+                        Text(r.title)
+                        Text(r.before.title)
+                        Text(r.after.title)
+                        Text(r.peakHeartRate.map { "\($0) bpm" } ?? "Not yet")
+                        Text(r.recoverySeconds.map { "\($0 / 60) min \($0 % 60) s" } ?? "Not yet")
+                    }
+                    .font(.system(size: 9))
+                }
+            }
+        }
+    }
+
+    // MARK: Footer
+
+    private var footer: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Divider()
+            if page == summary.pageCount - 1 {
+                Text("Values come from Apple Health and Apple Watch and may differ from clinical devices. Only measures with data are listed. Alerts read \"None\" when there were none or when they are not shared. Fear and symptoms are reported by the patient. This summary is not a diagnosis.")
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Text("\(summary.name)  ·  Generated \(day(summary.generated))  ·  Page \(page + 1) of \(summary.pageCount)")
+        }
+        .font(.system(size: 8))
+        .foregroundStyle(grey)
+    }
+
+    // MARK: Dates
+
+    private func day(_ date: Date) -> String { date.formatted(.dateTime.day().month(.abbreviated).year()) }
+
+    private func range(_ interval: DateInterval) -> String {
+        let f = Date.FormatStyle().day().month(.abbreviated)
+        return "\(interval.start.formatted(f)) – \(interval.end.formatted(f))"
     }
 }
 

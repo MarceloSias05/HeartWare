@@ -15,7 +15,7 @@ struct HearthwareApp: App {
 
     init() {
         // try! on purpose: without its store the app cannot do anything useful.
-        let container = try! ModelContainer(for: Profile.self, StepRecord.self)
+        let container = try! ModelContainer(for: Profile.self, StepRecord.self, SymptomRecord.self)
         _model = State(initialValue: AppModel(container: container))
     }
 

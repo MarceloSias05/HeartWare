@@ -60,6 +60,33 @@ let rep = HealthReport(readings: [MetricReading(metric: .steps, before: 1, recen
 check(rep.shown(in: .heart).map(\.metric) == [.restingHeartRate] && rep.shown(in: .movement).map(\.metric) == [.steps], "reportHidesEmptyRowsAndSplitsSections")
 check(HealthMetric.allCases.filter { $0.section == .heart }.first == .heartRate, "heartSectionFirst")
 
+// Summary facts
+let rs = [r(.veryScared, .nervous), r(.nervous, .calm), r(.calm, .calm)]
+check(SummaryFacts.fearTrend(rs).map { "\($0.first)|\($0.last)" } == "veryScared|calm", "fearTrendFirstAndLastBefore")
+check(SummaryFacts.fearTrend([r(.calm, .calm)]) == nil, "fearTrendNeedsTwoSteps")
+check(SummaryFacts.ladderPosition(goal: .stairs, records: []) == (1, 3), "ladderStartsAtOne")
+check(SummaryFacts.ladderPosition(goal: .stairs, records: rs) == (3, 3), "ladderCountsCalmSteps")
+check(SummaryFacts.ladderPosition(goal: .driving, records: rs + rs) == (2, 2), "ladderCapsAtTop")
+let gl = SummaryFacts.glance(report: HealthReport(readings: [
+    MetricReading(metric: .restingHeartRate, before: 74, recent: 66),
+    MetricReading(metric: .steps, before: 2100, recent: 4520),
+    MetricReading(metric: .walkingSpeed, before: 4.0, recent: 4.1),
+    MetricReading(metric: .irregularRhythmAlerts, before: 2, recent: 0)]), records: rs, symptoms: 3, urgentSymptoms: 1)
+check(gl.first == "Steps: 2,100 /day → 4,520 /day (↑ 115%)", "glanceStepsFirst")
+check(gl.contains("Resting heart rate: 74 bpm → 66 bpm (↓ 11%)"), "glanceRestingHR")
+check(!gl.contains { $0.hasPrefix("Walking speed") }, "glanceSkipsFlatChanges")
+check(gl.contains("Irregular rhythm alerts: 2 → None (↓ 2)"), "glanceAlerts")
+check(gl.contains("Fear before a step: Very scared → Calm"), "glanceFear")
+check(gl.last == "Symptoms reported: 3 (1 urgent)", "glanceSymptoms")
+check(SummaryFacts.glance(report: nil, records: [], symptoms: 0, urgentSymptoms: 0) == ["No symptoms reported"], "glanceEmpty")
+let joined = Date(timeIntervalSince1970: 1_000_000_000), nowD = joined.addingTimeInterval(20 * 86_400)
+let win = HealthReport.windows(joined: joined, now: nowD)
+check(win.before.end == joined && win.before.duration == 30 * 86_400, "beforeWindowEndsAtJoin")
+check(win.recent.end == nowD && win.recent.duration == 7 * 86_400, "recentWindowIsLastWeek")
+check(SummaryFacts.stepPages(count: 0, first: 25, rest: 40) == [0..<0], "stepPagesEmptyStillOnePage")
+check(SummaryFacts.stepPages(count: 30, first: 25, rest: 40) == [0..<25, 25..<30], "stepPagesSplit")
+check(SummaryFacts.stepPages(count: 90, first: 25, rest: 40) == [0..<25, 25..<65, 65..<90], "stepPagesMany")
+
 // AppModel + SwiftData
 MainActor.assumeIsolated {
     let m = AppModel(container: .empty)
@@ -83,6 +110,10 @@ MainActor.assumeIsolated {
     let nwm = AppModel(container: .empty)
     let nw = nwm.log(title: "t", before: .nervous, after: .calm)
     check(nw.peakHeartRate == nil && nw.recoverySeconds == nil, "logWithoutWatchLeavesNil")
+
+    let sm = AppModel(container: .empty)
+    sm.logSymptom("Dizzy", urgent: false); sm.logSymptom("Chest pain or pressure", urgent: true)
+    check(sm.symptoms.map(\.symptom) == ["Dizzy", "Chest pain or pressure"] && sm.symptoms.last?.urgent == true, "symptomsAreSavedOldestFirst")
 }
 
 print(failures == 0 ? "all checks OK" : "\(failures) check(s) failed")

@@ -9,6 +9,7 @@
 import SwiftUI
 
 struct HelpView: View {
+    @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @State private var noted: String?
 
@@ -26,7 +27,7 @@ struct HelpView: View {
                     sectionHeader("Needs help now")
                     ForEach(urgent, id: \.self) { item in
                         NavigationLink {
-                            EmergencyView()
+                            EmergencyView(symptom: item)
                         } label: {
                             row(item, color: .hwRed)
                         }
@@ -35,7 +36,7 @@ struct HelpView: View {
 
                     sectionHeader("Tell us more").padding(.top, 16)
                     ForEach(other, id: \.self) { item in
-                        Button { noted = item } label: { row(item, color: .primary) }
+                        Button { note(item) } label: { row(item, color: .primary) }
                             .buttonStyle(.plain)
                     }
 
@@ -57,6 +58,12 @@ struct HelpView: View {
                 Text("We'll add \"\(noted ?? "")\" to your summary and check on you in an hour. If it gets worse, come back here.")
             }
         }
+    }
+
+    private func note(_ symptom: String) {
+        model.logSymptom(symptom, urgent: false)
+        noted = symptom
+        Task { await CheckIn.schedule(after: symptom) }
     }
 
     private func sectionHeader(_ text: String) -> some View {
@@ -82,7 +89,11 @@ struct HelpView: View {
 }
 
 struct EmergencyView: View {
+    let symptom: String
+    @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
+    /// Log once, even if the view appears again after navigating back and forth.
+    @State private var logged = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -116,9 +127,15 @@ struct EmergencyView: View {
         }
         .padding(.horizontal, 20)
         .padding(.bottom, 8)
+        .onAppear {
+            guard !logged else { return }
+            logged = true
+            model.logSymptom(symptom, urgent: true)
+        }
     }
 }
 
 #Preview {
     HelpView()
+        .environment(AppModel(container: .empty))
 }

@@ -10,7 +10,7 @@ import SwiftData
 extension ModelContainer {
     @MainActor static var empty: ModelContainer {
         // try! is fine: an in-memory container with these two models cannot fail to open.
-        try! ModelContainer(for: Profile.self, StepRecord.self,
+        try! ModelContainer(for: Profile.self, StepRecord.self, SymptomRecord.self,
                             configurations: ModelConfiguration(isStoredInMemoryOnly: true))
     }
 }

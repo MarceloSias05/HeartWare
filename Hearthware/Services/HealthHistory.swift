@@ -12,9 +12,6 @@ import Foundation
 import HealthKit
 
 enum HealthHistory {
-    static let beforeDays = 30
-    static let recentDays = 7
-
     private static let store = HKHealthStore()
     private static let bpm = HKUnit.count().unitDivided(by: .minute())
 
@@ -76,9 +73,7 @@ enum HealthHistory {
         guard HKHealthStore.isHealthDataAvailable() else { return nil }
         try? await store.requestAuthorization(toShare: [], read: readTypes)
 
-        let day: TimeInterval = 86_400
-        let before = DateInterval(start: joined.addingTimeInterval(-Double(beforeDays) * day), end: joined)
-        let recent = DateInterval(start: now.addingTimeInterval(-Double(recentDays) * day), end: now)
+        let (before, recent) = HealthReport.windows(joined: joined, now: now)
 
         var values: [HealthMetric: (before: Double?, recent: Double?)] = [:]
         for metric in HealthMetric.allCases where metric != .meanArterialPressure {

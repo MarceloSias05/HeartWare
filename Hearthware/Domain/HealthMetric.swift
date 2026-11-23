@@ -118,6 +118,16 @@ nonisolated struct MetricReading: Sendable {
 nonisolated struct HealthReport: Sendable {
     var readings: [MetricReading]
 
+    static let beforeDays = 30
+    static let recentDays = 7
+
+    /// The 30 days before the person joined, and the last 7 days.
+    static func windows(joined: Date, now: Date) -> (before: DateInterval, recent: DateInterval) {
+        let day: TimeInterval = 86_400
+        return (DateInterval(start: joined.addingTimeInterval(-Double(beforeDays) * day), end: joined),
+                DateInterval(start: now.addingTimeInterval(-Double(recentDays) * day), end: now))
+    }
+
     /// Rows with data in at least one window, in the metric's declared order.
     func shown(in section: HealthMetric.Section) -> [MetricReading] {
         readings.filter { $0.metric.section == section && $0.hasData }

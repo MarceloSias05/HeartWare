@@ -17,6 +17,7 @@ final class AppModel {
     private var context: ModelContext { container.mainContext }
     private(set) var profile: Profile?
     private(set) var records: [StepRecord] = []
+    private(set) var symptoms: [SymptomRecord] = []
 
     init(container: ModelContainer) {
         self.container = container
@@ -52,6 +53,11 @@ final class AppModel {
         return record
     }
 
+    func logSymptom(_ symptom: String, urgent: Bool) {
+        context.insert(SymptomRecord(symptom: symptom, urgent: urgent))
+        save()
+    }
+
     // MARK: Storage
 
     private func save() {
@@ -62,5 +68,6 @@ final class AppModel {
     private func reload() {
         profile = (try? context.fetch(FetchDescriptor<Profile>(sortBy: [SortDescriptor(\.createdAt)])))?.last
         records = (try? context.fetch(FetchDescriptor<StepRecord>(sortBy: [SortDescriptor(\.date)]))) ?? []
+        symptoms = (try? context.fetch(FetchDescriptor<SymptomRecord>(sortBy: [SortDescriptor(\.date)]))) ?? []
     }
 }
