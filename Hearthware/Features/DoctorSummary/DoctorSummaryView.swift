@@ -58,10 +58,11 @@ struct DoctorSummaryView: View {
         .task {
             let now = Date.now
             let joined = model.profile?.createdAt ?? now
-            let summary = DoctorSummary(
+            var summary = DoctorSummary(
                 name: model.name, condition: model.condition, goal: model.goal, goalTitle: model.goalTitle,
                 joined: joined, generated: now, records: model.records, symptoms: model.symptoms,
                 health: await HealthHistory.report(joined: joined, now: now))
+            summary.narrative = await DoctorNarrative.write(summary.narrativePrompt)
             let pages = (0..<summary.pageCount).map { DoctorPDFPage(summary: summary, page: $0) }
             previews = pages.compactMap { page in
                 let renderer = ImageRenderer(content: page)
@@ -99,26 +100,39 @@ struct DoctorSummary {
     var records: [StepRecord]
     var symptoms: [SymptomRecord]
     var health: HealthReport?
+    /// Opening paragraph from the on-device model; nil when it isn't available.
+    var narrative: String? = nil
 
-    /// Steps table rows: the first part shares page 2 with the movement table.
-    static let stepsOnFirstPage = 30
+    var glance: [String] {
+        SummaryFacts.glance(report: health, records: records, symptoms: symptoms.count,
+                            urgentSymptoms: symptoms.filter(\.urgent).count)
+    }
+
+    var narrativePrompt: String {
+        let f = Date.FormatStyle(locale: Locale(identifier: "en_US")).day().month(.abbreviated)
+        return SummaryFacts.narrativePrompt(
+            name: name, condition: condition?.title ?? "Heart condition", goal: goalTitle ?? "Not set",
+            daysInApp: max(1, Calendar.current.dateComponents([.day], from: joined, to: generated).day ?? 0),
+            ladder: SummaryFacts.ladderPosition(goal: goal, records: records), stepsLogged: records.count,
+            facts: glance,
+            symptoms: symptoms.suffix(Self.maxSymptoms).map { "\($0.date.formatted(f)): \($0.symptom)\($0.urgent ? " (urgent)" : "")" })
+    }
+
     static let stepsPerPage = 45
     /// Most recent symptoms listed on page 1.
     static let maxSymptoms = 10
 
     enum Page {
-        case overview, trends
-        /// Steps table rows; the first steps page also carries the movement table.
-        case steps(Range<Int>, first: Bool)
+        case overview, trends, measures
+        case steps(Range<Int>)
     }
 
     var trendCards: [[TrendSeries]] { TrendCharts.cards(health?.trends ?? []) }
     var hasTrends: Bool { records.count >= 2 || !trendCards.isEmpty }
 
     var pages: [Page] {
-        let steps = SummaryFacts.stepPages(count: records.count, first: Self.stepsOnFirstPage, rest: Self.stepsPerPage)
-        return [.overview] + (hasTrends ? [.trends] : [])
-            + steps.enumerated().map { .steps($0.element, first: $0.offset == 0) }
+        let steps = SummaryFacts.stepPages(count: records.count, first: Self.stepsPerPage, rest: Self.stepsPerPage)
+        return [.overview] + (hasTrends ? [.trends] : []) + (health == nil ? [] : [.measures]) + steps.map { .steps($0) }
     }
     var pageCount: Int { pages.count }
     var windows: (before: DateInterval, recent: DateInterval) { HealthReport.windows(joined: joined, now: generated) }
@@ -139,15 +153,17 @@ struct DoctorPDFPage: View {
             switch summary.pages[page] {
             case .overview:
                 header
+                if let narrative = summary.narrative { summaryParagraph(narrative) }
                 glance
                 patientReported
-                if let health = summary.health { healthTable("Heart", health.shown(in: .heart)) }
             case .trends:
                 trends
-            case .steps(let rows, let first):
-                if first, let health = summary.health {
+            case .measures:
+                if let health = summary.health {
+                    healthTable("Heart", health.shown(in: .heart))
                     healthTable("Movement and tiredness", health.shown(in: .movement))
                 }
+            case .steps(let rows):
                 stepsTable(rows)
             }
             Spacer(minLength: 0)
@@ -179,12 +195,21 @@ struct DoctorPDFPage: View {
         }
     }
 
+    private func summaryParagraph(_ text: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Summary").font(.system(size: 13, weight: .bold))
+            Text(text).font(.system(size: 10.5))
+                .fixedSize(horizontal: false, vertical: true)
+            Text("Written on this iPhone by Apple Intelligence from the data in this summary. Check it against the tables.")
+                .font(.system(size: 8)).foregroundStyle(grey)
+            Divider().padding(.top, 4)
+        }
+    }
+
     private var glance: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("At a glance").font(.system(size: 13, weight: .bold))
-            ForEach(SummaryFacts.glance(report: summary.health, records: summary.records,
-                                        symptoms: summary.symptoms.count,
-                                        urgentSymptoms: summary.symptoms.filter(\.urgent).count), id: \.self) {
+            ForEach(summary.glance, id: \.self) {
                 Text("•  \($0)").font(.system(size: 10))
             }
             Divider().padding(.top, 4)

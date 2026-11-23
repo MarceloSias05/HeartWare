@@ -101,6 +101,15 @@ let cards = TrendCharts.cards(series)
 check(cards.map { $0.map(\.metric) } == [[.steps], [.systolic, .diastolic]], "cardsNeedTwoPointsAndKeepGroups")
 check(TrendCharts.metrics.contains(.systolic) && TrendCharts.metrics.contains(.diastolic), "chartMetricsIncludeBloodPressure")
 
+// Doctor narrative prompt
+let prompt = SummaryFacts.narrativePrompt(name: "Ana", condition: "Heart attack", goal: "Climbing my stairs", daysInApp: 40,
+                                          ladder: (2, 3), stepsLogged: 12, facts: ["Steps: 2,100 /day → 4,520 /day (↑ 115%)"],
+                                          symptoms: ["2 Oct: Dizzy", "5 Oct: Chest pain or pressure (urgent)"])
+check(prompt.contains("Ana") && prompt.contains("40 days") && prompt.contains("step 2 of 3"), "promptHasContext")
+check(prompt.contains("4,520") && prompt.contains("Chest pain or pressure (urgent)"), "promptHasFactsAndSymptoms")
+check(SummaryFacts.narrativePrompt(name: "A", condition: "C", goal: "G", daysInApp: 1, ladder: (1, 3), stepsLogged: 0,
+                                   facts: [], symptoms: []).contains("Symptoms reported: none"), "promptSaysNoSymptoms")
+
 // AppModel + SwiftData
 MainActor.assumeIsolated {
     let m = AppModel(container: .empty)
