@@ -1,6 +1,6 @@
 //
 //  HearthwareWatchApp.swift
-//  HearthwareWatch
+//  HearthwareWatch Watch App
 //
 //  The Watch keeps the person company during a step and measures how the heart
 //  responded. The iPhone owns all data; the Watch only sends back one WatchResult.

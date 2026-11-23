@@ -1,6 +1,6 @@
 //
 //  PhoneLink.swift
-//  HearthwareWatch
+//  HearthwareWatch Watch App
 //
 //  The Watch side of WatchConnectivity: reads which step to start, hears "cancel",
 //  and sends the result back to the iPhone.

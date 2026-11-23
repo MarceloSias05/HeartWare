@@ -1,6 +1,6 @@
 //
 //  WatchStepView.swift
-//  HearthwareWatch
+//  HearthwareWatch Watch App
 //
 //  Words only, never numbers. The orb breathes like on the iPhone and stays still
 //  with Reduce Motion.

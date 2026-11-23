@@ -1,6 +1,6 @@
 //
 //  StepWorkout.swift
-//  HearthwareWatch
+//  HearthwareWatch Watch App
 //
 //  One step as a HealthKit workout: keeps the person company with a soft tap every
 //  minute, tracks the peak heart rate, then listens during the rest to measure how
