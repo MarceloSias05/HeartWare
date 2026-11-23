@@ -106,10 +106,21 @@ struct DoctorSummary {
     /// Most recent symptoms listed on page 1.
     static let maxSymptoms = 10
 
-    var stepPages: [Range<Int>] {
-        SummaryFacts.stepPages(count: records.count, first: Self.stepsOnFirstPage, rest: Self.stepsPerPage)
+    enum Page {
+        case overview, trends
+        /// Steps table rows; the first steps page also carries the movement table.
+        case steps(Range<Int>, first: Bool)
     }
-    var pageCount: Int { 1 + stepPages.count }
+
+    var trendCards: [[TrendSeries]] { TrendCharts.cards(health?.trends ?? []) }
+    var hasTrends: Bool { records.count >= 2 || !trendCards.isEmpty }
+
+    var pages: [Page] {
+        let steps = SummaryFacts.stepPages(count: records.count, first: Self.stepsOnFirstPage, rest: Self.stepsPerPage)
+        return [.overview] + (hasTrends ? [.trends] : [])
+            + steps.enumerated().map { .steps($0.element, first: $0.offset == 0) }
+    }
+    var pageCount: Int { pages.count }
     var windows: (before: DateInterval, recent: DateInterval) { HealthReport.windows(joined: joined, now: generated) }
 }
 
@@ -125,16 +136,19 @@ struct DoctorPDFPage: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
-            if page == 0 {
+            switch summary.pages[page] {
+            case .overview:
                 header
                 glance
                 patientReported
                 if let health = summary.health { healthTable("Heart", health.shown(in: .heart)) }
-            } else {
-                if page == 1, let health = summary.health {
+            case .trends:
+                trends
+            case .steps(let rows, let first):
+                if first, let health = summary.health {
                     healthTable("Movement and tiredness", health.shown(in: .movement))
                 }
-                stepsTable(summary.stepPages[page - 1])
+                stepsTable(rows)
             }
             Spacer(minLength: 0)
             footer
@@ -144,6 +158,8 @@ struct DoctorPDFPage: View {
         .frame(width: Self.width, height: Self.height, alignment: .topLeading)
         .background(.white)
         .environment(\.colorScheme, .light)
+        // The summary is in English: dates and numbers use en_US whatever the phone locale.
+        .environment(\.locale, Locale(identifier: "en_US"))
         .foregroundStyle(.black)
     }
 
@@ -212,6 +228,37 @@ struct DoctorPDFPage: View {
                 }
             }
             Divider().padding(.top, 4)
+        }
+    }
+
+    // MARK: Trends
+
+    private var trends: some View {
+        let columns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
+        return VStack(alignment: .leading, spacing: 10) {
+            Text("Trends").font(.system(size: 13, weight: .bold))
+            Text("Each chart runs from \(HealthReport.beforeDays) days before joining until today. The dashed line marks the day the patient joined Hearthware; amber bars are days before it.")
+                .font(.system(size: 9)).foregroundStyle(grey)
+                .fixedSize(horizontal: false, vertical: true)
+            if summary.records.count >= 2 {
+                ChartCard(title: "Fear before and after each step", unit: "reported by the patient", height: 92) {
+                    FearChart(records: summary.records)
+                }
+            }
+            LazyVGrid(columns: columns, alignment: .leading, spacing: 12) {
+                if summary.records.filter({ $0.peakHeartRate != nil }).count >= 2 {
+                    ChartCard(title: "Peak heart rate during steps", unit: "bpm, Apple Watch") {
+                        PeakHeartRateChart(records: summary.records)
+                    }
+                }
+                ForEach(summary.trendCards.indices, id: \.self) { i in
+                    let card = summary.trendCards[i]
+                    ChartCard(title: card.count > 1 ? "Blood pressure" : card[0].metric.title,
+                              unit: card.count > 1 ? "mmHg, systolic and diastolic" : card[0].metric.chartUnit) {
+                        MetricTrendChart(series: card, joined: summary.joined)
+                    }
+                }
+            }
         }
     }
 

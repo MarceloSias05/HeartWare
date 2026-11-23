@@ -87,6 +87,20 @@ check(SummaryFacts.stepPages(count: 0, first: 25, rest: 40) == [0..<0], "stepPag
 check(SummaryFacts.stepPages(count: 30, first: 25, rest: 40) == [0..<25, 25..<30], "stepPagesSplit")
 check(SummaryFacts.stepPages(count: 90, first: 25, rest: 40) == [0..<25, 25..<65, 65..<90], "stepPagesMany")
 
+// Trends for charts
+check(HealthMetric.bloodOxygen.chartValue(0.97) == 97, "chartPercentIsTimes100")
+check(HealthMetric.steps.chartValue(4512) == 4512, "chartValueOtherwiseSame")
+check(HealthMetric.bloodOxygen.chartUnit == "%" && HealthMetric.restingHeartRate.chartUnit == "bpm", "chartUnits")
+check(Feeling.calm.chartLevel == 3 && Feeling.veryScared.chartLevel == 0, "calmIsTopOfFearChart")
+let d0 = Date(timeIntervalSince1970: 0)
+let series = [TrendSeries(metric: .steps, points: [TrendPoint(date: d0, value: 1), TrendPoint(date: d0 + 86_400, value: 2)]),
+              TrendSeries(metric: .restingHeartRate, points: [TrendPoint(date: d0, value: 70)]),
+              TrendSeries(metric: .systolic, points: [TrendPoint(date: d0, value: 120), TrendPoint(date: d0 + 86_400, value: 118)]),
+              TrendSeries(metric: .diastolic, points: [TrendPoint(date: d0, value: 80), TrendPoint(date: d0 + 86_400, value: 79)])]
+let cards = TrendCharts.cards(series)
+check(cards.map { $0.map(\.metric) } == [[.steps], [.systolic, .diastolic]], "cardsNeedTwoPointsAndKeepGroups")
+check(TrendCharts.metrics.contains(.systolic) && TrendCharts.metrics.contains(.diastolic), "chartMetricsIncludeBloodPressure")
+
 // AppModel + SwiftData
 MainActor.assumeIsolated {
     let m = AppModel(container: .empty)

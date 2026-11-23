@@ -117,6 +117,8 @@ nonisolated struct MetricReading: Sendable {
 
 nonisolated struct HealthReport: Sendable {
     var readings: [MetricReading]
+    /// Day-by-day values from 30 days before joining until today, for the charts.
+    var trends: [TrendSeries] = []
 
     static let beforeDays = 30
     static let recentDays = 7

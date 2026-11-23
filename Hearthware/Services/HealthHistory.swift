@@ -86,9 +86,39 @@ enum HealthHistory {
         values[.meanArterialPressure] = (map(values[.systolic]?.before, values[.diastolic]?.before),
                                          map(values[.systolic]?.recent, values[.diastolic]?.recent))
 
+        var trends: [TrendSeries] = []
+        for metric in TrendCharts.metrics {
+            trends.append(TrendSeries(metric: metric, points: await daily(metric, from: before.start, to: now)))
+        }
+
         return HealthReport(readings: HealthMetric.allCases.map {
             MetricReading(metric: $0, before: values[$0]?.before, recent: values[$0]?.recent)
-        })
+        }, trends: trends)
+    }
+
+    /// One value per day with data: the day's average, or its total for steps and other counts.
+    private static func daily(_ metric: HealthMetric, from start: Date, to end: Date) async -> [TrendPoint] {
+        let (id, unit, options): (HKQuantityTypeIdentifier, HKUnit, HKStatisticsOptions)
+        switch source(metric) {
+        case .average(let i, let u): (id, unit, options) = (i, u, .discreteAverage)
+        case .perDay(let i, let u): (id, unit, options) = (i, u, .cumulativeSum)
+        case .events, .ecg, .derived: return []
+        }
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: end)
+        let query = HKStatisticsCollectionQueryDescriptor(
+            predicate: .quantitySample(type: HKQuantityType(id), predicate: predicate),
+            options: options,
+            anchorDate: Calendar.current.startOfDay(for: start),
+            intervalComponents: DateComponents(day: 1))
+        guard let collection = try? await query.result(for: store) else { return [] }
+        var points: [TrendPoint] = []
+        collection.enumerateStatistics(from: start, to: end) { stats, _ in
+            let quantity = options == .cumulativeSum ? stats.sumQuantity() : stats.averageQuantity()
+            if let value = quantity?.doubleValue(for: unit) {
+                points.append(TrendPoint(date: stats.startDate, value: value))
+            }
+        }
+        return points
     }
 
     private static func value(_ metric: HealthMetric, in window: DateInterval) async -> Double? {
