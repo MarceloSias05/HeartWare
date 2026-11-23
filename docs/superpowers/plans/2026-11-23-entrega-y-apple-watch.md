@@ -25,8 +25,8 @@
 | B | B2 SwiftData | ✅ Hecha: `6f1c805`, en `main` |
 | B | B3 Onboarding nombre + "Other" | ✅ Hecha: `6bc62bd`, en `main` (falta probarla a mano en el simulador) |
 | C | C1 WatchResult + recuperación | ✅ Hecha: `ed7e629` (rama `feat/apple-watch`) |
-| C | C2 Target de watchOS | ❌ Falta crearlo en Xcode (lo hace Marcelo) |
-| C | C3 Sesión en el Watch | 🟡 Código escrito y con tipos revisados contra el SDK de watchOS (`daa7ead`); sin target ni prueba en un Watch |
+| C | C2 Target de watchOS | ✅ Hecha: target "HearthwareWatch Watch App" (Marcelo) + conexión (`ea05bcf`): HealthKit en los dos targets, textos de permiso, `workout-processing`, ícono. Los dos esquemas compilan |
+| C | C3 Sesión en el Watch | 🟡 Compila en el target. No se ha corrido: no hay runtime de simulador de watchOS en la Mac, y el pulso real solo se prueba en un Watch |
 | C | C4 iPhone ↔ Watch | 🟡 El lado del iPhone compila y tiene respaldo sin Watch (`9aca6cc`); falta probarlo con un Watch real |
 | C | C5 TestFlight build 2 | ❌ Pendiente |
 
