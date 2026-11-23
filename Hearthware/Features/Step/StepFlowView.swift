@@ -71,22 +71,14 @@ struct StepFlowView: View {
     // MARK: Before
 
     private var beforeView: some View {
-        QuestionPage(
-            step: "Your step",
-            title: idea.title,
-            subtitle: idea.hint,
-            footnote: "There is no wrong answer. Feeling scared is normal.",
+        FeelingPage(
+            eyebrow: idea.title,
+            question: "How do you feel about it?",
+            footnote: "\(idea.hint)\nThere is no wrong answer. Feeling scared is normal.",
             buttonTitle: watchLink.canUseWatch ? "Start on Apple Watch" : "Start your step",
+            feeling: $before,
             action: { if idea.bigStep { phase = .askDoctor } else { begin() } }
-        ) {
-            Text("How do you feel about it?")
-                .font(.title3.bold())
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.bottom, 4)
-            ForEach(Feeling.allCases) { feeling in
-                ChoiceRow(title: feeling.title, selected: before == feeling) { before = feeling }
-            }
-        }
+        )
     }
 
     // MARK: Ask your doctor
@@ -123,21 +115,16 @@ struct StepFlowView: View {
     // MARK: After
 
     private var afterView: some View {
-        QuestionPage(
-            step: "After your step",
-            title: "How did it feel?",
-            subtitle: idea.title,
-            footnote: nil,
+        FeelingPage(
+            eyebrow: "After: \(idea.title)",
+            question: "How did it feel?",
             buttonTitle: "See what your body did",
+            feeling: $after,
             action: {
                 record = model.log(title: idea.title, before: before, after: after, watch: watchResult)
                 phase = .result
             }
-        ) {
-            ForEach(Feeling.allCases) { feeling in
-                ChoiceRow(title: feeling.title, selected: after == feeling) { after = feeling }
-            }
-        }
+        )
     }
 
     // MARK: Result
