@@ -15,14 +15,21 @@ enum DoctorNarrative {
     private static let instructions = """
         You write the opening paragraph of a patient summary for a cardiologist.
         Use only the facts given. Never invent numbers, dates or symptoms.
+        The patient's age and sex are unknown: never mention them.
         Do not diagnose, do not recommend treatment, do not say whether a change is good or bad.
         Third person, plain clinical English, 3 or 4 sentences, under 90 words. No headings, no lists.
         """
 
     static func write(_ prompt: String) async -> String? {
         guard case .available = SystemLanguageModel.default.availability else { return nil }
-        let session = LanguageModelSession(instructions: instructions)
-        let response = try? await session.respond(to: prompt, options: GenerationOptions(temperature: 0.2))
-        return response?.content.trimmingCharacters(in: .whitespacesAndNewlines)
+        // A second try if the first one invents a number; then no paragraph rather than a wrong one.
+        for _ in 0..<2 {
+            let session = LanguageModelSession(instructions: instructions)
+            guard let response = try? await session.respond(to: prompt, options: GenerationOptions(temperature: 0.2))
+            else { return nil }
+            let text = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
+            if SummaryFacts.isGrounded(text, in: prompt) { return text }
+        }
+        return nil
     }
 }

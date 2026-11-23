@@ -14,7 +14,7 @@
 - el código actual (`StepFlowView`: "With you" stands in for the Apple Watch; `DoctorSummaryView` muestra "Not yet");
 - el Sketch de Heartware (9 pantallas de Watch, que no se leyeron para este plan).
 
-## Estado (actualizado 2026-11-23)
+## Estado (actualizado 2026-11-24)
 
 | Parte | Tarea | Estado |
 |---|---|---|
@@ -36,15 +36,28 @@
 | C | C10 Sentimiento con cara y slider (pedido por Marcelo) | ✅ Hecha en `feat/feeling-slider` (desde main). `FeelingPage`: cara que cambia de asustada a tranquila, fondo ámbar → menta, palabra grande, slider que se ajusta a 4 sentimientos, háptica y VoiceOver. Reemplaza la lista antes y después del paso |
 | C | C11 Colores por sentimiento y notas | ✅ Hecha. Naranja, amarillo, verde y menta; "Add note" antes y después del paso, las notas salen en el PDF |
 | C | C12 Onboarding: sentimiento inicial, condición sin preseleccionar, Apple Health | ✅ Hecha. 5 páginas; el sentimiento de hoy es el inicio de la tendencia de miedo; permiso de Salud explicado al final |
+| C | C13 Texto libre en "Something else" de la condición; página de Salud con scroll | ✅ Hecha. Sale en el PDF y en el párrafo |
+| C | C14 Ícono nuevo: "circuit heart" | ✅ Hecha. Corazón de pistas de circuito (hardware), pulso adentro (corazón) y pista ámbar que sube (longevidad). Light, dark, tinted y Watch; se regenera con `docs/app-icon.swift` |
+| C | C15 El párrafo de Apple Intelligence no puede inventar datos | ✅ Hecha. Inventó una edad (24) que la app nunca pide. Ahora: las instrucciones prohíben mencionar edad y sexo, y cada número del párrafo debe estar en los datos que recibió; si no, se genera otra vez y, si vuelve a fallar, el PDF sale sin párrafo |
 
 **Entregables hoy:**
 - **App Name:** sin decidir (Heartware / Hearthware).
-- **App Icon:** ✅ orbe teal en `Assets.xcassets/AppIcon.appiconset` (light, dark, tinted).
+- **App Icon:** ✅ "circuit heart" en `Assets.xcassets/AppIcon.appiconset` (light, dark, tinted) y en el Watch.
 - **App Statement:** borrador en A1, sin aprobar.
 - **App Summary Template:** ❌ falta llenarlo.
 - **Git:** https://github.com/MarceloSias05/Hearthware (privado).
 - **TestFlight:** ❌ falta.
-- **Frameworks hoy:** SwiftUI, Observation, SwiftData, HealthKit, WatchConnectivity, WatchKit.
+- **Frameworks** (sacados de los `import` del código, 2026-11-24):
+  - **SwiftUI:** toda la interfaz, en iPhone y Watch.
+  - **Observation:** `AppModel` con `@Observable`.
+  - **SwiftData:** perfil, pasos (con notas) y síntomas, guardados en el teléfono.
+  - **HealthKit:** lee el historial de corazón y movimiento para el resumen; en el Watch, la sesión de ejercicio que mide el pulso del paso.
+  - **WatchConnectivity:** el iPhone le pasa el paso al Watch y recibe el resultado.
+  - **WatchKit:** la app del Watch.
+  - **Swift Charts:** las gráficas de la página "Trends" del PDF.
+  - **FoundationModels:** el párrafo para el doctor, escrito en el iPhone con Apple Intelligence.
+  - **UserNotifications:** el aviso de "How are you feeling now?" una hora después de reportar un síntoma.
+  - **Foundation:** base (fechas, formatos, texto).
 
 **Cambios respecto al plan original (decididos al implementar):**
 - `AppModel.init(container: ModelContainer)` en vez de `init(context:)`, y la clase es `@MainActor`: un `ModelContext` no retiene a su contenedor, así que `ModelContainer.empty.mainContext` tronaba en el primer fetch. Previews y chequeos usan `AppModel(container: .empty)`.

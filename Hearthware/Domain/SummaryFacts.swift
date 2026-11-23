@@ -74,4 +74,14 @@ enum SummaryFacts {
         lines.append(symptoms.isEmpty ? "Symptoms reported: none." : "Symptoms reported:\n" + symptoms.map { "- \($0)" }.joined(separator: "\n"))
         return lines.joined(separator: "\n")
     }
+
+    /// True when every number in the model's text also appears in the facts it was given.
+    /// Catches invented values, like an age the app never asked for.
+    static func isGrounded(_ text: String, in prompt: String) -> Bool {
+        func numbers(_ s: String) -> Set<String> {
+            let number = try! Regex(#"\d[\d,]*(?:\.\d+)?"#)
+            return Set(s.matches(of: number).map { s[$0.range].replacingOccurrences(of: ",", with: "") })
+        }
+        return numbers(text).isSubset(of: numbers(prompt))
+    }
 }

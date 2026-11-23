@@ -121,6 +121,9 @@ let prompt = SummaryFacts.narrativePrompt(name: "Ana", condition: "Heart attack"
                                           symptoms: ["2 Oct: Dizzy", "5 Oct: Chest pain or pressure (urgent)"])
 check(prompt.contains("Ana") && prompt.contains("40 days") && prompt.contains("step 2 of 3"), "promptHasContext")
 check(prompt.contains("4,520") && prompt.contains("Chest pain or pressure (urgent)"), "promptHasFactsAndSymptoms")
+check(SummaryFacts.isGrounded("Ana walked 4,520 steps a day, up from 2,100, over 40 days.", in: prompt), "groundedNumbersPass")
+check(!SummaryFacts.isGrounded("Ana, a 24-year-old patient, walked 4,520 steps.", in: prompt), "inventedAgeIsRejected")
+check(SummaryFacts.isGrounded("Fear moved from very scared to calm.", in: prompt), "noNumbersPass")
 check(SummaryFacts.narrativePrompt(name: "A", condition: "C", goal: "G", daysInApp: 1, ladder: (1, 3), stepsLogged: 0,
                                    facts: [], symptoms: []).contains("Symptoms reported: none"), "promptSaysNoSymptoms")
 
