@@ -9,7 +9,7 @@ import Foundation
 
 /// The part of life the person wants back.
 enum Goal: String, CaseIterable, Codable, Identifiable {
-    case stairs, market, grandkids, driving, travelling
+    case stairs, market, grandkids, driving, travelling, other
 
     var id: String { rawValue }
 
@@ -20,6 +20,7 @@ enum Goal: String, CaseIterable, Codable, Identifiable {
         case .grandkids: "Playing with my grandkids"
         case .driving: "Driving again"
         case .travelling: "Travelling"
+        case .other: "Something else"
         }
     }
 
@@ -44,6 +45,11 @@ enum Goal: String, CaseIterable, Codable, Identifiable {
         case .travelling:
             [StepIdea(title: "Plan a short trip", hint: "Somewhere close and easy to come back from.", bigStep: true),
              StepIdea(title: "Take a flight", hint: "Walk the aisle now and then.", bigStep: true)]
+        case .other:
+            // Generic ladder for a goal the person wrote themselves.
+            [StepIdea(title: "Try it for a few minutes", hint: "Stop whenever you want."),
+             StepIdea(title: "Do it a little longer", hint: "Rest whenever you need to."),
+             StepIdea(title: "Do it like before", hint: "Take someone with you the first time.")]
         }
     }
 }

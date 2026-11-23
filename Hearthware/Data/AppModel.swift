@@ -28,6 +28,7 @@ final class AppModel {
     var hasOnboarded: Bool { profile != nil }
     var name: String { profile?.name ?? "" }
     var goal: Goal? { profile?.goal }
+    var goalTitle: String? { profile?.goalTitle }
     var condition: HeartCondition? { profile?.condition }
 
     var todayStep: StepIdea { Coach.nextStep(goal: goal, records: records) }

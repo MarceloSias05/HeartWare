@@ -25,6 +25,7 @@ extension Color {
 struct PillButtonStyle: ButtonStyle {
     var role: Role = .primary
     enum Role { case primary, secondary, destructive }
+    @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -32,7 +33,7 @@ struct PillButtonStyle: ButtonStyle {
             .frame(maxWidth: .infinity, minHeight: 56)
             .foregroundStyle(foreground)
             .background(background, in: .capsule)
-            .opacity(configuration.isPressed ? 0.75 : 1)
+            .opacity(!isEnabled ? 0.35 : configuration.isPressed ? 0.75 : 1)
             .contentShape(.capsule)
     }
 

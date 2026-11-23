@@ -17,7 +17,7 @@ struct DoctorSummaryView: View {
                 Text("Everything your doctor needs, numbers included. You don't have to read them.")
                     .foregroundStyle(Color.hwSecondary)
                 Container {
-                    DoctorPDFPage(name: model.name, condition: model.condition, records: model.records)
+                    DoctorPDFPage(name: model.name, condition: model.condition, goal: model.goalTitle, records: model.records)
                         .frame(width: 595, height: 842)
                         .scaleEffect(0.3, anchor: .top)
                         .frame(width: 595 * 0.3, height: 842 * 0.3)
@@ -50,7 +50,7 @@ struct DoctorSummaryView: View {
 
     private func makePDF() -> URL? {
         let url = URL.temporaryDirectory.appending(path: "Hearthware summary.pdf")
-        let page = DoctorPDFPage(name: model.name, condition: model.condition, records: model.records)
+        let page = DoctorPDFPage(name: model.name, condition: model.condition, goal: model.goalTitle, records: model.records)
             .frame(width: 595, height: 842)
         let renderer = ImageRenderer(content: page)
         var ok = false
@@ -71,6 +71,7 @@ struct DoctorSummaryView: View {
 struct DoctorPDFPage: View {
     let name: String
     let condition: HeartCondition?
+    let goal: String?
     let records: [StepRecord]
 
     var body: some View {
@@ -79,7 +80,7 @@ struct DoctorPDFPage: View {
                 .font(.system(size: 10, weight: .bold)).kerning(1)
                 .foregroundStyle(Color(white: 0.42))
             Text(name).font(.system(size: 24, weight: .bold))
-            Text("\(condition?.title ?? "Heart condition")  ·  \(records.count) steps logged  ·  Created by the patient")
+            Text("\(condition?.title ?? "Heart condition")  ·  Goal: \(goal ?? "Not set")  ·  \(records.count) steps logged  ·  Created by the patient")
                 .font(.system(size: 11)).foregroundStyle(Color(white: 0.42))
             Divider()
             Text("Steps taken").font(.system(size: 13, weight: .bold))

@@ -15,6 +15,7 @@ struct QuestionPage<Choices: View>: View {
     let footnote: String?
     let buttonTitle: String
     let action: () -> Void
+    var buttonDisabled = false
     @ViewBuilder var choices: Choices
 
     var body: some View {
@@ -43,6 +44,7 @@ struct QuestionPage<Choices: View>: View {
         .safeAreaInset(edge: .bottom) {
             Button(buttonTitle, action: action)
                 .buttonStyle(.pill)
+                .disabled(buttonDisabled)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 8)
         }

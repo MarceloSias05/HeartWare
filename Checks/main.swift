@@ -16,6 +16,18 @@ check(!Coach.dayState(records: [r(.calm, .nervous)]).calm, "dayStateAfterHardSte
 check(Coach.fearIsShrinking(records: [r(.veryScared, .nervous), r(.calm, .calm)]), "fearShrinksWhenLastBeforeIsLower")
 check(!Coach.fearIsShrinking(records: [r(.calm, .calm)]), "fearNotShrinkingWithOneRecord")
 
+// Onboarding input
+check(!OnboardingInput(name: "   ").nameIsValid, "blankNameIsInvalid")
+check(OnboardingInput(name: "  Ana \n").trimmedName == "Ana", "nameIsTrimmed")
+check(!OnboardingInput(name: String(repeating: "a", count: 41)).nameIsValid, "longNameIsInvalid")
+check(OnboardingInput(name: "Ana").nameIsValid, "normalNameIsValid")
+check(!OnboardingInput(goal: .other, customGoal: "  ").goalIsValid, "otherGoalNeedsText")
+check(OnboardingInput(goal: .other, customGoal: " Gardening ").trimmedCustomGoal == "Gardening", "otherGoalKeepsTrimmedText")
+check(OnboardingInput(goal: .market, customGoal: "x").trimmedCustomGoal == nil, "listedGoalIgnoresText")
+check(Goal.other.steps.first?.title == "Try it for a few minutes", "otherGoalHasGenericLadder")
+check(Profile(name: "A", goal: .other, customGoal: "Gardening", condition: .other).goalTitle == "Gardening", "goalTitleUsesCustomText")
+check(Profile(name: "A", goal: .market, customGoal: nil, condition: .other).goalTitle == Goal.market.title, "goalTitleForListedGoal")
+
 // AppModel + SwiftData
 MainActor.assumeIsolated {
     let m = AppModel(container: .empty)

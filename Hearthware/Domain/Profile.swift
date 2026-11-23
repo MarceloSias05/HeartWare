@@ -24,4 +24,9 @@ final class Profile {
         self.condition = condition
         self.createdAt = createdAt
     }
+
+    /// The goal in the person's own words when they chose "Something else".
+    var goalTitle: String {
+        goal == .other ? (customGoal ?? goal.title) : goal.title
+    }
 }
