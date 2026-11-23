@@ -26,6 +26,9 @@ check(OnboardingInput(goal: .other, customGoal: " Gardening ").trimmedCustomGoal
 check(OnboardingInput(goal: .market, customGoal: "x").trimmedCustomGoal == nil, "listedGoalIgnoresText")
 check(OnboardingInput().condition == nil && !OnboardingInput().conditionIsValid, "noConditionPreselected")
 check(OnboardingInput(condition: .surgery).conditionIsValid, "pickedConditionIsValid")
+check(!OnboardingInput(condition: .other, customCondition: "  ").conditionIsValid, "otherConditionNeedsText")
+check(OnboardingInput(condition: .other, customCondition: " Myocarditis ").trimmedCustomCondition == "Myocarditis", "otherConditionKeepsTrimmedText")
+check(OnboardingInput(condition: .surgery, customCondition: "x").trimmedCustomCondition == nil, "listedConditionIgnoresText")
 check(Goal.other.steps.first?.title == "Try it for a few minutes", "otherGoalHasGenericLadder")
 check(Profile(name: "A", goal: .other, customGoal: "Gardening", condition: .other).goalTitle == "Gardening", "goalTitleUsesCustomText")
 check(Profile(name: "A", goal: .market, customGoal: nil, condition: .other).goalTitle == Goal.market.title, "goalTitleForListedGoal")
@@ -130,6 +133,10 @@ MainActor.assumeIsolated {
     o.completeOnboarding(name: "Ana", goal: .market, customGoal: nil, condition: .surgery, baselineFear: .veryScared)
     check(o.hasOnboarded && o.name == "Ana" && o.condition == .surgery && o.goal == .market, "onboardingCreatesProfile")
     check(o.profile?.baselineFear == .veryScared, "onboardingSavesBaselineFear")
+    let oc = AppModel(container: .empty)
+    oc.completeOnboarding(name: "Ana", goal: .market, customGoal: nil, condition: .other, customCondition: "Myocarditis")
+    check(oc.conditionTitle == "Myocarditis", "customConditionIsShown")
+    check(o.conditionTitle == "Heart surgery", "listedConditionTitle")
 
     let c = ModelContainer.empty
     AppModel(container: c).log(title: "Walk", before: .nervous, after: .calm)

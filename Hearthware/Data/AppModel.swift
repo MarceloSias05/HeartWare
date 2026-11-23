@@ -31,6 +31,7 @@ final class AppModel {
     var goal: Goal? { profile?.goal }
     var goalTitle: String? { profile?.goalTitle }
     var condition: HeartCondition? { profile?.condition }
+    var conditionTitle: String? { profile?.conditionTitle }
 
     var todayStep: StepIdea { Coach.nextStep(goal: goal, records: records) }
     var todayState: DayState { Coach.dayState(records: records) }
@@ -40,9 +41,9 @@ final class AppModel {
     // MARK: Intents
 
     func completeOnboarding(name: String, goal: Goal, customGoal: String?, condition: HeartCondition,
-                            baselineFear: Feeling? = nil) {
+                            customCondition: String? = nil, baselineFear: Feeling? = nil) {
         context.insert(Profile(name: name, goal: goal, customGoal: customGoal, condition: condition,
-                               baselineFear: baselineFear))
+                               customCondition: customCondition, baselineFear: baselineFear))
         save()
     }
 

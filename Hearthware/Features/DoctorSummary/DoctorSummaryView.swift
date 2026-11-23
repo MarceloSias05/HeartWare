@@ -59,7 +59,7 @@ struct DoctorSummaryView: View {
             let now = Date.now
             let joined = model.profile?.createdAt ?? now
             var summary = DoctorSummary(
-                name: model.name, condition: model.condition, goal: model.goal, goalTitle: model.goalTitle,
+                name: model.name, conditionTitle: model.conditionTitle, goal: model.goal, goalTitle: model.goalTitle,
                 joined: joined, generated: now, records: model.records, baselineFear: model.profile?.baselineFear,
                 symptoms: model.symptoms,
                 health: await HealthHistory.report(joined: joined, now: now))
@@ -93,7 +93,8 @@ struct DoctorSummaryView: View {
 /// Everything the summary shows, gathered once.
 struct DoctorSummary {
     var name: String
-    var condition: HeartCondition?
+    /// "Heart attack", or the person's own words for "Something else".
+    var conditionTitle: String?
     var goal: Goal?
     var goalTitle: String?
     var joined: Date
@@ -114,7 +115,7 @@ struct DoctorSummary {
     var narrativePrompt: String {
         let f = Date.FormatStyle(locale: Locale(identifier: "en_US")).day().month(.abbreviated)
         return SummaryFacts.narrativePrompt(
-            name: name, condition: condition?.title ?? "Heart condition", goal: goalTitle ?? "Not set",
+            name: name, condition: conditionTitle ?? "Heart condition", goal: goalTitle ?? "Not set",
             daysInApp: max(1, Calendar.current.dateComponents([.day], from: joined, to: generated).day ?? 0),
             ladder: SummaryFacts.ladderPosition(goal: goal, records: records), stepsLogged: records.count,
             facts: glance,
@@ -193,7 +194,7 @@ struct DoctorPDFPage: View {
                 .font(.system(size: 10, weight: .bold)).kerning(1)
                 .foregroundStyle(grey)
             Text(summary.name).font(.system(size: 24, weight: .bold))
-            Text("\(summary.condition?.title ?? "Heart condition")  ·  Goal: \(summary.goalTitle ?? "Not set")  ·  Created by the patient")
+            Text("\(summary.conditionTitle ?? "Heart condition")  ·  Goal: \(summary.goalTitle ?? "Not set")  ·  Created by the patient")
                 .font(.system(size: 11)).foregroundStyle(grey)
             Text("Using Hearthware since \(day(summary.joined))  ·  Generated \(day(summary.generated))")
                 .font(.system(size: 11)).foregroundStyle(grey)

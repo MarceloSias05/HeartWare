@@ -13,6 +13,7 @@ struct OnboardingInput {
     var customGoal = ""
     /// Nothing picked until the person picks: skipping must not save "Heart attack".
     var condition: HeartCondition?
+    var customCondition = ""
     /// How the person feels about their goal today, the start of the fear trend.
     var baselineFear: Feeling = .nervous
 
@@ -28,5 +29,11 @@ struct OnboardingInput {
         return text.isEmpty ? nil : text
     }
     var goalIsValid: Bool { goal != .other || trimmedCustomGoal != nil }
-    var conditionIsValid: Bool { condition != nil }
+    /// Only kept when the condition is "Something else"; nil when it is blank.
+    var trimmedCustomCondition: String? {
+        guard condition == .other else { return nil }
+        let text = customCondition.trimmingCharacters(in: .whitespacesAndNewlines)
+        return text.isEmpty ? nil : text
+    }
+    var conditionIsValid: Bool { condition != nil && (condition != .other || trimmedCustomCondition != nil) }
 }

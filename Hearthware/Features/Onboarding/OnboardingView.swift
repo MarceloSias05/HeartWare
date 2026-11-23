@@ -15,7 +15,7 @@ struct OnboardingView: View {
     @FocusState private var focused: Field?
 
     enum Page: Hashable { case name, goal, feeling, condition, health }
-    enum Field { case name, customGoal }
+    enum Field { case name, customGoal, customCondition }
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -147,7 +147,19 @@ struct OnboardingView: View {
             buttonDisabled: !input.conditionIsValid
         ) {
             ForEach(HeartCondition.allCases) { option in
-                ChoiceRow(title: option.title, selected: input.condition == option) { input.condition = option }
+                ChoiceRow(title: option.title, selected: input.condition == option) {
+                    input.condition = option
+                    if option == .other { focused = .customCondition }
+                }
+            }
+            if input.condition == .other {
+                TextField("What happened to your heart?", text: $input.customCondition)
+                    .textInputAutocapitalization(.sentences)
+                    .submitLabel(.done)
+                    .focused($focused, equals: .customCondition)
+                    .padding(.horizontal, 20)
+                    .frame(minHeight: 52)
+                    .background(Color.hwCard, in: .capsule)
             }
         }
     }
@@ -155,30 +167,36 @@ struct OnboardingView: View {
     // MARK: Apple Health
 
     private var healthPage: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("5 of 5")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Color.hwSecondary)
-            Container {
-                Image(systemName: "heart.text.square.fill")
-                    .font(.system(size: 72))
-                    .foregroundStyle(Color.hwRed)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 36)
-                    .accessibilityHidden(true)
-            }
-            .padding(.top, 12)
-            Text("Show your doctor\nhow far you've come")
-                .font(.largeTitle.bold())
-                .padding(.top, 28)
-            Text("Hearthware reads your heart and walking history from Apple Health, including the weeks before today, so your doctor can see the before and after. You'll never see numbers here.")
-                .foregroundStyle(Color.hwSecondary)
-                .padding(.top, 10)
-            Text("Read only. It stays on your phone until you share the summary.")
-                .font(.subheadline)
-                .foregroundStyle(Color.hwSecondary)
+        // Scrolls on small phones and large text sizes; buttons stay pinned at the bottom.
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("5 of 5")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.hwSecondary)
+                Container {
+                    Image(systemName: "heart.text.square.fill")
+                        .font(.system(size: 64))
+                        .foregroundStyle(Color.hwRed)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 28)
+                        .accessibilityHidden(true)
+                }
                 .padding(.top, 12)
-            Spacer(minLength: 24)
+                Text("Show your doctor how far you've come")
+                    .font(.largeTitle.bold())
+                    .padding(.top, 28)
+                Text("Hearthware reads your heart and walking history from Apple Health, including the weeks before today, so your doctor can see the before and after. You'll never see numbers here.")
+                    .foregroundStyle(Color.hwSecondary)
+                    .padding(.top, 10)
+                Text("Read only. It stays on your phone until you share the summary.")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.hwSecondary)
+                    .padding(.top, 12)
+            }
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 20)
+        }
+        .safeAreaInset(edge: .bottom) {
             VStack(spacing: 12) {
                 Button("Connect Apple Health") {
                     Task {
@@ -190,16 +208,18 @@ struct OnboardingView: View {
                 Button("Not now") { finish() }
                     .buttonStyle(.pillSecondary)
             }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 8)
+            .background(Color(uiColor: .systemBackground))
         }
-        .padding(.horizontal, 20)
-        .padding(.bottom, 8)
     }
 
     private func finish() {
         // Guard again: the buttons are disabled, but never save an incomplete profile.
         guard input.nameIsValid, input.goalIsValid, let condition = input.condition else { return }
         model.completeOnboarding(name: input.trimmedName, goal: input.goal, customGoal: input.trimmedCustomGoal,
-                                 condition: condition, baselineFear: input.baselineFear)
+                                 condition: condition, customCondition: input.trimmedCustomCondition,
+                                 baselineFear: input.baselineFear)
     }
 }
 
