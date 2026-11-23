@@ -10,6 +10,7 @@ import SwiftUI
 struct DoctorSummaryView: View {
     @Environment(AppModel.self) private var model
     @State private var pdfURL: URL?
+    @State private var preview: UIImage?
 
     var body: some View {
         ScrollView {
@@ -17,13 +18,19 @@ struct DoctorSummaryView: View {
                 Text("Everything your doctor needs, numbers included. You don't have to read them.")
                     .foregroundStyle(Color.hwSecondary)
                 Container {
-                    DoctorPDFPage(name: model.name, condition: model.condition, goal: model.goalTitle, records: model.records)
-                        .frame(width: 595, height: 842)
-                        .scaleEffect(0.3, anchor: .top)
-                        .frame(width: 595 * 0.3, height: 842 * 0.3)
-                        .shadow(color: .black.opacity(0.12), radius: 8, y: 4)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
+                    // An image of the real page, so the preview always matches the PDF and fits any width.
+                    Group {
+                        if let preview {
+                            Image(uiImage: preview)
+                                .resizable()
+                                .scaledToFit()
+                                .clipShape(.rect(cornerRadius: 6))
+                                .shadow(color: .black.opacity(0.12), radius: 8, y: 4)
+                        } else {
+                            ProgressView("Reading Apple Health…")
+                                .frame(maxWidth: .infinity, minHeight: 240)
+                        }
+                    }
                 }
                 .padding(.top, 20)
                 .accessibilityLabel("Preview of the summary for your doctor")
@@ -45,13 +52,19 @@ struct DoctorSummaryView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 8)
         }
-        .task { pdfURL = makePDF() }
+        .task {
+            let health = await HealthHistory.report(joined: model.profile?.createdAt ?? .now)
+            let page = DoctorPDFPage(name: model.name, condition: model.condition, goal: model.goalTitle,
+                                     records: model.records, health: health)
+            let renderer = ImageRenderer(content: page)
+            renderer.scale = 2
+            preview = renderer.uiImage
+            pdfURL = makePDF(page)
+        }
     }
 
-    private func makePDF() -> URL? {
+    private func makePDF(_ page: DoctorPDFPage) -> URL? {
         let url = URL.temporaryDirectory.appending(path: "Hearthware summary.pdf")
-        let page = DoctorPDFPage(name: model.name, condition: model.condition, goal: model.goalTitle, records: model.records)
-            .frame(width: 595, height: 842)
         let renderer = ImageRenderer(content: page)
         var ok = false
         renderer.render { _, draw in
@@ -73,9 +86,13 @@ struct DoctorPDFPage: View {
     let condition: HeartCondition?
     let goal: String?
     let records: [StepRecord]
+    var health: HealthReport?
+
+    /// Keeps the page to one A4 sheet.
+    private static let maxStepRows = 10
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 9) {
             Text("HEARTWARE  ·  PATIENT SUMMARY")
                 .font(.system(size: 10, weight: .bold)).kerning(1)
                 .foregroundStyle(Color(white: 0.42))
@@ -83,14 +100,19 @@ struct DoctorPDFPage: View {
             Text("\(condition?.title ?? "Heart condition")  ·  Goal: \(goal ?? "Not set")  ·  \(records.count) steps logged  ·  Created by the patient")
                 .font(.system(size: 11)).foregroundStyle(Color(white: 0.42))
             Divider()
-            Text("Steps taken").font(.system(size: 13, weight: .bold))
-            Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 6) {
+            if let health {
+                healthTable("Heart", health.shown(in: .heart))
+                healthTable("Movement and tiredness", health.shown(in: .movement))
+            }
+            Text(records.count > Self.maxStepRows ? "Steps taken (last \(Self.maxStepRows) of \(records.count))" : "Steps taken")
+                .font(.system(size: 13, weight: .bold))
+            Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 3) {
                 GridRow {
                     ForEach(["Date", "Step", "Fear before", "Fear after", "Peak HR", "Back to rest"], id: \.self) {
                         Text($0).font(.system(size: 9, weight: .semibold)).foregroundStyle(Color(white: 0.42))
                     }
                 }
-                ForEach(records) { r in
+                ForEach(records.suffix(Self.maxStepRows)) { r in
                     GridRow {
                         Text(r.date, format: .dateTime.day().month(.abbreviated))
                         Text(r.title)
@@ -99,20 +121,46 @@ struct DoctorPDFPage: View {
                         Text(r.peakHeartRate.map { "\($0) bpm" } ?? "Not yet")
                         Text(r.recoverySeconds.map { "\($0 / 60) min \($0 % 60) s" } ?? "Not yet")
                     }
-                    .font(.system(size: 10))
+                    .font(.system(size: 9))
                 }
             }
             Divider()
-            Text("Heart rate values come from Apple Watch once it is connected and may differ from clinical devices. This summary is not a diagnosis.")
+            Text("Values come from Apple Health and Apple Watch and may differ from clinical devices. Only measures with data are listed. Alerts read \"None\" when there were none or when they are not shared. This summary is not a diagnosis.")
                 .font(.system(size: 9))
+                .fixedSize(horizontal: false, vertical: true)
                 .foregroundStyle(Color(white: 0.42))
             Spacer()
         }
-        .padding(48)
+        .padding(.horizontal, 44)
+        .padding(.vertical, 36)
         .frame(width: 595, height: 842, alignment: .topLeading)
         .background(.white)
         .environment(\.colorScheme, .light)
         .foregroundStyle(.black)
+    }
+
+    @ViewBuilder
+    private func healthTable(_ title: String, _ rows: [MetricReading]) -> some View {
+        if !rows.isEmpty {
+            Text(title).font(.system(size: 13, weight: .bold))
+            Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 2) {
+                GridRow {
+                    ForEach(["Measure", "\(HealthHistory.beforeDays) days before joining", "Last \(HealthHistory.recentDays) days", "Change"], id: \.self) {
+                        Text($0).font(.system(size: 9, weight: .semibold)).foregroundStyle(Color(white: 0.42))
+                    }
+                }
+                ForEach(rows, id: \.metric) { r in
+                    GridRow {
+                        Text(r.metric.title)
+                        Text(r.before.map(r.metric.format) ?? "No data")
+                        Text(r.recent.map(r.metric.format) ?? "No data")
+                        Text(r.change)
+                    }
+                    .font(.system(size: 9))
+                }
+            }
+            Divider()
+        }
     }
 }
 

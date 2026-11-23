@@ -43,6 +43,23 @@ check(WatchMessage.result(from: ["kind": "cancel"]) == nil, "cancelIsNotAResult"
 check(WatchMessage.result(from: ["kind": "result", "step": "s1", "result": Data("x".utf8)]) == nil, "garbageResultIsIgnored")
 check(WatchMessage.start(from: WatchMessage.startContext(step: "s2", title: "Walk")).map { "\($0.step)|\($0.title)" } == "s2|Walk", "startContextRoundTrips")
 
+// Health history (pure part)
+check(HealthMetric.restingHeartRate.format(61.4) == "61 bpm", "formatBpm")
+check(HealthMetric.bloodOxygen.format(0.972) == "97%", "formatPercentFromFraction")
+check(HealthMetric.walkingSpeed.format(4.53) == "4.5 km/h", "formatSpeedOneDecimal")
+check(HealthMetric.steps.format(4512.6) == "4,513 /day", "formatStepsPerDay")
+check(HealthMetric.irregularRhythmAlerts.format(0) == "None", "formatZeroAlerts")
+check(abs(HealthMetric.meanArterialPressure(systolic: 120, diastolic: 80) - 93.33) < 0.01, "meanArterialPressure")
+check(MetricReading(metric: .steps, before: 2000, recent: 4500).change == "↑ 125%", "changeUp")
+check(MetricReading(metric: .restingHeartRate, before: 80, recent: 70).change == "↓ 13%", "changeDown")
+check(MetricReading(metric: .restingHeartRate, before: 80, recent: 81).change == "≈", "changeSmallIsFlat")
+check(MetricReading(metric: .steps, before: nil, recent: 4500).change == "–", "changeNeedsBoth")
+check(MetricReading(metric: .irregularRhythmAlerts, before: 0, recent: 2).change == "↑ 2", "alertChangeIsCount")
+check(MetricReading(metric: .steps, before: nil, recent: nil).hasData == false, "noDataBothWindows")
+let rep = HealthReport(readings: [MetricReading(metric: .steps, before: 1, recent: 2), MetricReading(metric: .walkingSpeed, before: nil, recent: nil), MetricReading(metric: .restingHeartRate, before: 70, recent: nil)])
+check(rep.shown(in: .heart).map(\.metric) == [.restingHeartRate] && rep.shown(in: .movement).map(\.metric) == [.steps], "reportHidesEmptyRowsAndSplitsSections")
+check(HealthMetric.allCases.filter { $0.section == .heart }.first == .heartRate, "heartSectionFirst")
+
 // AppModel + SwiftData
 MainActor.assumeIsolated {
     let m = AppModel(container: .empty)

@@ -56,7 +56,7 @@
         "DEVELOPMENT_TEAM": "N2TLVFPKL4",
         "ENABLE_PREVIEWS": "YES",
         "GENERATE_INFOPLIST_FILE": "YES",
-        "INFOPLIST_KEY_NSHealthShareUsageDescription": "Hearthware reads your heart rate during a step so your doctor can see how your heart responded.",
+        "INFOPLIST_KEY_NSHealthShareUsageDescription": "Hearthware reads your heart and walking data from Health to build the summary for your doctor, so they can see how you are improving.",
         "INFOPLIST_KEY_NSHealthUpdateUsageDescription": "Hearthware saves each step as a walking workout in Health.",
         "INFOPLIST_KEY_UIApplicationSceneManifest_Generation": "YES",
         "INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents": "YES",
