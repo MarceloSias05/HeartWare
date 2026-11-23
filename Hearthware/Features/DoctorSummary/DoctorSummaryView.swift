@@ -60,7 +60,8 @@ struct DoctorSummaryView: View {
             let joined = model.profile?.createdAt ?? now
             var summary = DoctorSummary(
                 name: model.name, condition: model.condition, goal: model.goal, goalTitle: model.goalTitle,
-                joined: joined, generated: now, records: model.records, symptoms: model.symptoms,
+                joined: joined, generated: now, records: model.records, baselineFear: model.profile?.baselineFear,
+                symptoms: model.symptoms,
                 health: await HealthHistory.report(joined: joined, now: now))
             summary.narrative = await DoctorNarrative.write(summary.narrativePrompt)
             let pages = (0..<summary.pageCount).map { DoctorPDFPage(summary: summary, page: $0) }
@@ -98,13 +99,15 @@ struct DoctorSummary {
     var joined: Date
     var generated: Date
     var records: [StepRecord]
+    /// How they felt about the goal when they joined (asked in onboarding).
+    var baselineFear: Feeling? = nil
     var symptoms: [SymptomRecord]
     var health: HealthReport?
     /// Opening paragraph from the on-device model; nil when it isn't available.
     var narrative: String? = nil
 
     var glance: [String] {
-        SummaryFacts.glance(report: health, records: records, symptoms: symptoms.count,
+        SummaryFacts.glance(report: health, records: records, baseline: baselineFear, symptoms: symptoms.count,
                             urgentSymptoms: symptoms.filter(\.urgent).count)
     }
 
@@ -129,7 +132,8 @@ struct DoctorSummary {
     }
 
     var trendCards: [[TrendSeries]] { TrendCharts.cards(health?.trends ?? []) }
-    var hasTrends: Bool { records.count >= 2 || !trendCards.isEmpty }
+    var hasFearTrend: Bool { SummaryFacts.fearTrend(records, baseline: baselineFear) != nil }
+    var hasTrends: Bool { hasFearTrend || !trendCards.isEmpty }
 
     var pages: [Page] {
         let steps = SummaryFacts.stepPages(weights: records.map { StepRecord.noteWeight(before: $0.noteBefore, after: $0.noteAfter) },
@@ -225,8 +229,8 @@ struct DoctorPDFPage: View {
         return VStack(alignment: .leading, spacing: 4) {
             Text("How the patient feels").font(.system(size: 13, weight: .bold))
             Group {
-                if let fear = SummaryFacts.fearTrend(summary.records) {
-                    Text("Fear before a step: \(fear.first.title) at the first step, \(fear.last.title.lowercased()) at the latest.")
+                if let fear = SummaryFacts.fearTrend(summary.records, baseline: summary.baselineFear) {
+                    Text("Fear before a step: \(fear.first.title) \(summary.baselineFear == nil ? "at the first step" : "when they joined"), \(fear.last.title.lowercased()) at the latest.")
                 } else {
                     Text("Fear before a step: not enough steps yet to show a change.")
                 }
@@ -267,9 +271,9 @@ struct DoctorPDFPage: View {
             Text("Each chart runs from \(HealthReport.beforeDays) days before joining until today. The dashed line marks the day the patient joined Hearthware; amber bars are days before it.")
                 .font(.system(size: 9)).foregroundStyle(grey)
                 .fixedSize(horizontal: false, vertical: true)
-            if summary.records.count >= 2 {
+            if summary.hasFearTrend {
                 ChartCard(title: "Fear before and after each step", unit: "reported by the patient", height: 92) {
-                    FearChart(records: summary.records)
+                    FearChart(records: summary.records, baseline: summary.baselineFear, joined: summary.joined)
                 }
             }
             LazyVGrid(columns: columns, alignment: .leading, spacing: 12) {

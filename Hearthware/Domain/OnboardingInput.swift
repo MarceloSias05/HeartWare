@@ -11,7 +11,10 @@ struct OnboardingInput {
     var name = ""
     var goal: Goal = .stairs
     var customGoal = ""
-    var condition: HeartCondition = .heartAttack
+    /// Nothing picked until the person picks: skipping must not save "Heart attack".
+    var condition: HeartCondition?
+    /// How the person feels about their goal today, the start of the fear trend.
+    var baselineFear: Feeling = .nervous
 
     static let maxNameLength = 40
 
@@ -25,4 +28,5 @@ struct OnboardingInput {
         return text.isEmpty ? nil : text
     }
     var goalIsValid: Bool { goal != .other || trimmedCustomGoal != nil }
+    var conditionIsValid: Bool { condition != nil }
 }

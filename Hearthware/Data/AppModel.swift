@@ -39,8 +39,10 @@ final class AppModel {
 
     // MARK: Intents
 
-    func completeOnboarding(name: String, goal: Goal, customGoal: String?, condition: HeartCondition) {
-        context.insert(Profile(name: name, goal: goal, customGoal: customGoal, condition: condition))
+    func completeOnboarding(name: String, goal: Goal, customGoal: String?, condition: HeartCondition,
+                            baselineFear: Feeling? = nil) {
+        context.insert(Profile(name: name, goal: goal, customGoal: customGoal, condition: condition,
+                               baselineFear: baselineFear))
         save()
     }
 

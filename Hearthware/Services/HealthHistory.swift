@@ -67,6 +67,12 @@ enum HealthHistory {
         return types
     }
 
+    /// Shows the Health sheet (only the first time; later calls return at once).
+    static func requestAccess() async {
+        guard HKHealthStore.isHealthDataAvailable() else { return }
+        try? await store.requestAuthorization(toShare: [], read: readTypes)
+    }
+
     /// Asks once for read access (iOS shows the Health sheet only the first time),
     /// then reads both windows. Nil when Health is not available on this device.
     static func report(joined: Date, now: Date = .now) async -> HealthReport? {

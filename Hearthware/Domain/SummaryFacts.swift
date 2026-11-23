@@ -9,10 +9,12 @@
 import Foundation
 
 enum SummaryFacts {
-    /// How scared the person felt before their first step, and before their latest one.
-    static func fearTrend(_ records: [StepRecord]) -> (first: Feeling, last: Feeling)? {
-        guard records.count > 1, let first = records.first, let last = records.last else { return nil }
-        return (first.before, last.before)
+    /// How scared the person felt at the start (when they joined, or before their first step)
+    /// and before their latest step. Needs two answers.
+    static func fearTrend(_ records: [StepRecord], baseline: Feeling? = nil) -> (first: Feeling, last: Feeling)? {
+        let answers = (baseline.map { [$0] } ?? []) + records.map(\.before)
+        guard answers.count > 1, let first = answers.first, let last = answers.last else { return nil }
+        return (first, last)
     }
 
     /// Which rung of the goal's ladder the next step is on (1-based), out of how many.
@@ -23,7 +25,8 @@ enum SummaryFacts {
     }
 
     /// Up to three clear Health changes, then fear, then symptoms. Flat changes are left out.
-    static func glance(report: HealthReport?, records: [StepRecord], symptoms: Int, urgentSymptoms: Int) -> [String] {
+    static func glance(report: HealthReport?, records: [StepRecord], baseline: Feeling? = nil,
+                       symptoms: Int, urgentSymptoms: Int) -> [String] {
         let priority: [HealthMetric] = [.steps, .restingHeartRate, .sixMinuteWalk, .walkingSpeed,
                                         .heartRateRecovery, .irregularRhythmAlerts]
         let readings = report?.readings ?? []
@@ -34,7 +37,7 @@ enum SummaryFacts {
             return "\(metric.title): \(metric.format(before)) → \(metric.format(recent)) (\(r.change))"
         }
         lines = Array(lines.prefix(3))
-        if let fear = fearTrend(records) {
+        if let fear = fearTrend(records, baseline: baseline) {
             lines.append("Fear before a step: \(fear.first.title) → \(fear.last.title)")
         }
         lines.append(symptoms == 0 ? "No symptoms reported"

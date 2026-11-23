@@ -24,6 +24,8 @@ check(OnboardingInput(name: "Ana").nameIsValid, "normalNameIsValid")
 check(!OnboardingInput(goal: .other, customGoal: "  ").goalIsValid, "otherGoalNeedsText")
 check(OnboardingInput(goal: .other, customGoal: " Gardening ").trimmedCustomGoal == "Gardening", "otherGoalKeepsTrimmedText")
 check(OnboardingInput(goal: .market, customGoal: "x").trimmedCustomGoal == nil, "listedGoalIgnoresText")
+check(OnboardingInput().condition == nil && !OnboardingInput().conditionIsValid, "noConditionPreselected")
+check(OnboardingInput(condition: .surgery).conditionIsValid, "pickedConditionIsValid")
 check(Goal.other.steps.first?.title == "Try it for a few minutes", "otherGoalHasGenericLadder")
 check(Profile(name: "A", goal: .other, customGoal: "Gardening", condition: .other).goalTitle == "Gardening", "goalTitleUsesCustomText")
 check(Profile(name: "A", goal: .market, customGoal: nil, condition: .other).goalTitle == Goal.market.title, "goalTitleForListedGoal")
@@ -64,6 +66,8 @@ check(HealthMetric.allCases.filter { $0.section == .heart }.first == .heartRate,
 let rs = [r(.veryScared, .nervous), r(.nervous, .calm), r(.calm, .calm)]
 check(SummaryFacts.fearTrend(rs).map { "\($0.first)|\($0.last)" } == "veryScared|calm", "fearTrendFirstAndLastBefore")
 check(SummaryFacts.fearTrend([r(.calm, .calm)]) == nil, "fearTrendNeedsTwoSteps")
+check(SummaryFacts.fearTrend([r(.nervous, .calm)], baseline: .veryScared).map { "\($0.first)|\($0.last)" } == "veryScared|nervous", "fearTrendStartsAtBaseline")
+check(SummaryFacts.fearTrend([], baseline: .nervous) == nil, "baselineAloneIsNoTrend")
 check(SummaryFacts.ladderPosition(goal: .stairs, records: []) == (1, 3), "ladderStartsAtOne")
 check(SummaryFacts.ladderPosition(goal: .stairs, records: rs) == (3, 3), "ladderCountsCalmSteps")
 check(SummaryFacts.ladderPosition(goal: .driving, records: rs + rs) == (2, 2), "ladderCapsAtTop")
@@ -123,8 +127,9 @@ MainActor.assumeIsolated {
     check(!m.hasOnboarded && m.records.isEmpty && m.name == "", "startsEmpty")
 
     let o = AppModel(container: .empty)
-    o.completeOnboarding(name: "Ana", goal: .market, customGoal: nil, condition: .surgery)
+    o.completeOnboarding(name: "Ana", goal: .market, customGoal: nil, condition: .surgery, baselineFear: .veryScared)
     check(o.hasOnboarded && o.name == "Ana" && o.condition == .surgery && o.goal == .market, "onboardingCreatesProfile")
+    check(o.profile?.baselineFear == .veryScared, "onboardingSavesBaselineFear")
 
     let c = ModelContainer.empty
     AppModel(container: c).log(title: "Walk", before: .nervous, after: .calm)

@@ -35,9 +35,17 @@ struct ChartCard<Content: View>: View {
 /// Fear before and after every step, from what the person answered in the app.
 struct FearChart: View {
     let records: [StepRecord]
+    /// The answer from onboarding, drawn as the first "before" point on the day they joined.
+    var baseline: Feeling? = nil
+    var joined: Date = .now
 
     var body: some View {
         Chart {
+            if let baseline {
+                LineMark(x: .value("Date", joined), y: .value("Feeling", baseline.chartLevel),
+                         series: .value("When", "Before the step"))
+                    .foregroundStyle(by: .value("When", "Before the step"))
+            }
             ForEach(records) { r in
                 LineMark(x: .value("Date", r.date), y: .value("Feeling", r.before.chartLevel),
                          series: .value("When", "Before the step"))

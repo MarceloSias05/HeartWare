@@ -15,7 +15,8 @@ struct FeelingPage: View {
     var footnote: String? = nil
     let buttonTitle: String
     @Binding var feeling: Feeling
-    @Binding var note: String
+    /// Nil hides "Add note".
+    var note: Binding<String>?
     let action: () -> Void
 
     /// 0 = very scared … 3 = calm. Continuous while dragging, snaps to a feeling on release.
@@ -23,13 +24,13 @@ struct FeelingPage: View {
     @State private var writingNote = false
 
     init(eyebrow: String, question: String, footnote: String? = nil, buttonTitle: String,
-         feeling: Binding<Feeling>, note: Binding<String>, action: @escaping () -> Void) {
+         feeling: Binding<Feeling>, note: Binding<String>? = nil, action: @escaping () -> Void) {
         self.eyebrow = eyebrow
         self.question = question
         self.footnote = footnote
         self.buttonTitle = buttonTitle
         _feeling = feeling
-        _note = note
+        self.note = note
         self.action = action
         _level = State(initialValue: Double(Feeling.veryScared.rawValue - feeling.wrappedValue.rawValue))
     }
@@ -87,8 +88,8 @@ struct FeelingPage: View {
             .padding(.top, 20)
 
             Group {
-                if !note.isEmpty {
-                    Text("“\(note)”").italic().lineLimit(2)
+                if let text = note?.wrappedValue, !text.isEmpty {
+                    Text("“\(text)”").italic().lineLimit(2)
                 } else if let footnote {
                     Text(footnote)
                 }
@@ -100,15 +101,17 @@ struct FeelingPage: View {
 
             Spacer(minLength: 24)
             HStack(spacing: 10) {
-                Button { writingNote = true } label: {
-                    Label(note.isEmpty ? "Add note" : "Edit note", systemImage: "square.and.pencil")
-                        .font(.headline)
-                        .padding(.horizontal, 20)
-                        .frame(height: 56)
-                        .background(shade.opacity(0.22), in: .capsule)
+                if let note {
+                    Button { writingNote = true } label: {
+                        Label(note.wrappedValue.isEmpty ? "Add note" : "Edit note", systemImage: "square.and.pencil")
+                            .font(.headline)
+                            .padding(.horizontal, 20)
+                            .frame(height: 56)
+                            .background(shade.opacity(0.22), in: .capsule)
+                    }
+                    .buttonStyle(.plain)
+                    .fixedSize()
                 }
-                .buttonStyle(.plain)
-                .fixedSize()
                 Button(buttonTitle, action: action)
                     .buttonStyle(.pill)
             }
@@ -127,7 +130,7 @@ struct FeelingPage: View {
         .sensoryFeedback(.selection, trigger: feeling)
         .animation(.easeOut(duration: 0.15), value: feeling)
         .sheet(isPresented: $writingNote) {
-            NoteSheet(question: question, note: $note)
+            if let note { NoteSheet(question: question, note: note) }
         }
     }
 }
