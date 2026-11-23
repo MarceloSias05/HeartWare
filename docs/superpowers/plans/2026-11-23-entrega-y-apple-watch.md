@@ -14,6 +14,34 @@
 - el código actual (`StepFlowView`: "With you" stands in for the Apple Watch; `DoctorSummaryView` muestra "Not yet");
 - el Sketch de Heartware (9 pantallas de Watch, que no se leyeron para este plan).
 
+## Estado (actualizado 2026-11-23)
+
+| Parte | Tarea | Estado |
+|---|---|---|
+| A | A1 Decisiones | ❌ Pendiente: nombre, statement, "Slow down", Signing |
+| A | A2 TestFlight build 1 | ❌ Pendiente |
+| A | A3 Repo, summary, frameworks | ❌ Pendiente (repo sigue privado) |
+| B | B1 Target de tests | ⏭️ Saltada: los chequeos corren con `Checks/run.sh` (21 chequeos, todos pasan) |
+| B | B2 SwiftData | ✅ Hecha: `6f1c805`, en `main` |
+| B | B3 Onboarding nombre + "Other" | ✅ Hecha: `6bc62bd`, en `main` (falta probarla a mano en el simulador) |
+| C | C1–C5 Apple Watch | 🔜 Siguiente |
+
+**Entregables hoy:**
+- **App Name:** sin decidir (Heartware / Hearthware).
+- **App Icon:** ✅ orbe teal en `Assets.xcassets/AppIcon.appiconset` (light, dark, tinted).
+- **App Statement:** borrador en A1, sin aprobar.
+- **App Summary Template:** ❌ falta llenarlo.
+- **Git:** https://github.com/MarceloSias05/Hearthware (privado).
+- **TestFlight:** ❌ falta.
+- **Frameworks hoy:** SwiftUI, Observation, SwiftData. Con la Parte C: + HealthKit, WatchConnectivity, WatchKit.
+
+**Cambios respecto al plan original (decididos al implementar):**
+- `AppModel.init(container: ModelContainer)` en vez de `init(context:)`, y la clase es `@MainActor`: un `ModelContext` no retiene a su contenedor, así que `ModelContainer.empty.mainContext` tronaba en el primer fetch. Previews y chequeos usan `AppModel(container: .empty)`.
+- El resumen para el doctor y el PDF muestran también la meta ("Goal: <goalTitle>"), para que la meta escrita en "Other" sirva de algo.
+- El botón pill se ve atenuado cuando está deshabilitado.
+- Bundle ID actual: `com.marcelo.academy.Heartware`; team del target `N2TLVFPKL4`, pero el proyecto todavía dice `VWUWR4BNBX`. Hay que unificarlos antes de archivar.
+- Si la Parte C no llega a la entrega, cambiar "Start on Apple Watch" y "Your Watch taps your wrist…" en `StepFlowView.swift`: hoy prometen un Watch que no existe.
+
 ## Global Constraints
 
 - Sin datos de ejemplo: se borran `SampleData.swift`, el nombre fijo "Marco" y `AppModel.preview()`. Los previews usan un contenedor de SwiftData en memoria y vacío.
@@ -45,7 +73,7 @@
 - [ ] **"Slow down" en el Watch:**
   - (a) Sin aviso automático: el Watch solo acompaña y mide (recomendado).
   - (b) Límite de pulso que escribe el paciente "según su doctor".
-- [ ] **Team y bundle ID:** confirmar `VWUWR4BNBX` y `com.lira.academy.Hearthware` en App Store Connect.
+- [ ] **Team y bundle ID:** unificar el team (`N2TLVFPKL4` en el target, `VWUWR4BNBX` en el proyecto) y registrar `com.marcelo.academy.Heartware` en App Store Connect.
 
 ### Task A2: TestFlight build 1, para tener el link ya
 
@@ -66,7 +94,10 @@ El link público de TestFlight no cambia entre builds. Se puede hacer antes de l
 
 ## Parte B — Datos reales y onboarding
 
-### Task B1: Target de tests con Swift Testing
+### Task B1: Target de tests con Swift Testing (⏭️ saltada por ahora)
+
+Mientras no exista el target, todo test de este plan va en `Checks/main.swift` y se corre con `Checks/run.sh` (Expected: `all checks OK`).
+
 
 **Files:**
 - Create (Xcode UI): target `HearthwareTests` (Unit Testing Bundle, Swift Testing), host app Hearthware.
@@ -78,7 +109,7 @@ El link público de TestFlight no cambia entre builds. Se puede hacer antes de l
 - [ ] **Step 3:** `xcodebuild test -project Hearthware.xcodeproj -scheme Hearthware -destination 'platform=iOS Simulator,name=iPhone 17'` → `** TEST SUCCEEDED **`, 7 tests.
 - [ ] **Step 4:** Borrar `Checks/`. Commit: `"Move checks to Swift Testing target"`.
 
-### Task B2: SwiftData
+### Task B2: SwiftData (✅ hecha, `6f1c805`)
 
 **Files:**
 - Modify: `Hearthware/Domain/StepRecord.swift` (de struct a `@Model`)
@@ -94,45 +125,44 @@ El link público de TestFlight no cambia entre builds. Se puede hacer antes de l
 - Produces:
   - `@Model final class StepRecord { var id: UUID; var date: Date; var title: String; var before: Feeling; var after: Feeling; var peakHeartRate: Int?; var recoverySeconds: Int?; init(date: Date, title: String, before: Feeling, after: Feeling, peakHeartRate: Int? = nil, recoverySeconds: Int? = nil) }`. Las vistas que usan `ForEach(records)` siguen funcionando porque `@Model` es `Identifiable`.
   - `@Model final class Profile { var name: String; var goal: Goal; var customGoal: String?; var condition: HeartCondition; var createdAt: Date }` y `var goalTitle: String`, que devuelve `customGoal` si `goal == .other` y si no `goal.title`.
-  - `AppModel.init(context: ModelContext)`. Lee el `Profile` y los `StepRecord` ordenados por `date` ascendente.
+  - `AppModel.init(container: ModelContainer)` (`@MainActor`). Lee el `Profile` y los `StepRecord` ordenados por `date` ascendente.
   - `AppModel`: `private(set) var profile: Profile?`, `private(set) var records: [StepRecord]`, `var hasOnboarded: Bool { profile != nil }`, `var name: String { profile?.name ?? "" }`, `var goal: Goal?`, `var condition: HeartCondition?`. `todayStep`, `todayState`, `fearIsShrinking` y `explanation(for:)` no cambian.
   - `func completeOnboarding(name: String, goal: Goal, customGoal: String?, condition: HeartCondition)` y `@discardableResult func log(title: String, before: Feeling, after: Feeling) -> StepRecord`. Las dos insertan, llaman a `save()` y vuelven a leer.
   - `private func save()`: `try context.save()`; en el `catch`, `assertionFailure` con el error.
   - `extension ModelContainer { @MainActor static var empty: ModelContainer }` en `PreviewContainer.swift`: un contenedor en memoria (`isStoredInMemoryOnly: true`) para previews y tests.
-- `HearthwareApp`: `.modelContainer(for: [Profile.self, StepRecord.self])` y `AppModel(context: container.mainContext)` en `@State`.
+- `HearthwareApp`: `.modelContainer(for: [Profile.self, StepRecord.self])` y `AppModel(container: container)` en `@State`.
 
-- [ ] **Step 1: Tests que fallan**
+- [x] **Step 1: Tests que fallan**
 
 ```swift
 @MainActor @Test func startsEmpty() {
-    let m = AppModel(context: ModelContainer.empty.mainContext)
+    let m = AppModel(container: .empty)
     #expect(!m.hasOnboarded && m.records.isEmpty && m.name == "")
 }
 @MainActor @Test func onboardingCreatesProfile() {
-    let m = AppModel(context: ModelContainer.empty.mainContext)
+    let m = AppModel(container: .empty)
     m.completeOnboarding(name: "Ana", goal: .market, customGoal: nil, condition: .surgery)
     #expect(m.hasOnboarded && m.name == "Ana" && m.condition == .surgery)
 }
 @MainActor @Test func stepSurvivesNewContext() {
     let c = ModelContainer.empty
-    AppModel(context: c.mainContext).log(title: "Walk", before: .nervous, after: .calm)
-    let reopened = AppModel(context: ModelContext(c))
-    #expect(reopened.records.map(\.title) == ["Walk"])
+    AppModel(container: c).log(title: "Walk", before: .nervous, after: .calm)
+    #expect((try? ModelContext(c).fetch(FetchDescriptor<StepRecord>()))?.map(\.title) == ["Walk"])
 }
 @MainActor @Test func recordsAreOldestFirst() {
-    let m = AppModel(context: ModelContainer.empty.mainContext)
+    let m = AppModel(container: .empty)
     m.log(title: "a", before: .calm, after: .calm); m.log(title: "b", before: .calm, after: .calm)
     #expect(m.records.map(\.title) == ["a", "b"])
 }
 ```
 
-- [ ] **Step 2:** Correr → FAIL (`AppModel(context:)` no existe).
-- [ ] **Step 3:** Implementar las interfaces de arriba, borrar `StateStore.swift` y `SampleData.swift`, y cambiar los previews a `.environment(AppModel(context: ModelContainer.empty.mainContext))`. `TodayView` saluda "Good morning,\n\(model.name)".
-- [ ] **Step 4:** Correr → PASS (11 tests). Compilar → `BUILD SUCCEEDED`. `grep -rn "Marco\|sample\|preview(" Hearthware` no devuelve nada.
+- [x] **Step 2:** Correr → FAIL (`AppModel(context:)` no existe).
+- [x] **Step 3:** Implementar las interfaces de arriba, borrar `StateStore.swift` y `SampleData.swift`, y cambiar los previews a `.environment(AppModel(container: .empty))`. `TodayView` saluda "Good morning,\n\(model.name)".
+- [x] **Step 4:** Correr → PASS (11 tests). Compilar → `BUILD SUCCEEDED`. `grep -rn "Marco\|sample\|preview(" Hearthware` no devuelve nada.
 - [ ] **Step 5:** En el simulador: hacer el onboarding, registrar un paso, matar la app y relanzarla; el paso sigue en la Story.
-- [ ] **Step 6:** Commit: `"Persist profile and steps with SwiftData, remove sample data"`.
+- [x] **Step 6:** Commit: `"Persist profile and steps with SwiftData, remove sample data"`.
 
-### Task B3: Onboarding con nombre y meta "Other"
+### Task B3: Onboarding con nombre y meta "Other" (✅ hecha, `6bc62bd`)
 
 **Files:**
 - Modify: `Hearthware/Domain/Goal.swift` (`case other`)
@@ -155,7 +185,7 @@ El link público de TestFlight no cambia entre builds. Se puede hacer antes de l
 - `QuestionPage` gana `var buttonDisabled: Bool = false` (`DesignSystem/QuestionPage.swift`).
 - Donde la app muestre la meta, usar `profile.goalTitle`, no `goal.title`.
 
-- [ ] **Step 1: Tests que fallan**
+- [x] **Step 1: Tests que fallan**
 
 ```swift
 @Test func blankNameIsInvalid() { #expect(!OnboardingInput(name: "   ").nameIsValid) }
@@ -167,12 +197,12 @@ El link público de TestFlight no cambia entre builds. Se puede hacer antes de l
 @Test func otherGoalHasGenericLadder() { #expect(Goal.other.steps.first?.title == "Try it for a few minutes") }
 ```
 
-- [ ] **Step 2:** Correr → FAIL.
-- [ ] **Step 3:** Implementar `OnboardingInput`, `Goal.other` y las pantallas. `finish()` llama a `model.completeOnboarding(name: input.trimmedName, goal: input.goal, customGoal: input.trimmedCustomGoal, condition: input.condition)`.
-- [ ] **Step 4:** Correr → PASS (18 tests).
+- [x] **Step 2:** Correr → FAIL.
+- [x] **Step 3:** Implementar `OnboardingInput`, `Goal.other` y las pantallas. `finish()` llama a `model.completeOnboarding(name: input.trimmedName, goal: input.goal, customGoal: input.trimmedCustomGoal, condition: input.condition)`.
+- [x] **Step 4:** Correr → PASS (18 tests).
 - [ ] **Step 5:** En el simulador, con VoiceOver y Dynamic Type XXL: el campo de nombre tiene etiqueta, el teclado no tapa "Continue" y con "Something else" + "Gardening" el resumen y la Story muestran "Gardening".
 - [ ] **Step 6:** El nombre escrito sale en todas partes: `grep -rn "model.name\|profile.name" Hearthware` lista Today ("Good morning, <name>"), `DoctorSummaryView` y `DoctorPDFPage`. Exportar el PDF del resumen y confirmar que el encabezado dice el nombre del onboarding.
-- [ ] **Step 7:** Commit: `"Onboarding asks for name and allows a custom goal"`.
+- [x] **Step 7:** Commit: `"Onboarding asks for name and allows a custom goal"`.
 
 ---
 
@@ -183,7 +213,7 @@ El link público de TestFlight no cambia entre builds. Se puede hacer antes de l
 **Files:**
 - Create: `Hearthware/Domain/WatchResult.swift` (solo Foundation; se comparte con el Watch)
 - Modify: `Hearthware/Data/AppModel.swift` (`log`)
-- Test: `HearthwareTests/WatchResultTests.swift`
+- Test: `Checks/main.swift` (o `HearthwareTests/WatchResultTests.swift` si B1 ya existe)
 
 **Interfaces:**
 - Produces:
@@ -207,19 +237,19 @@ El link público de TestFlight no cambia entre builds. Se puede hacer antes de l
     #expect(Recovery.seconds(baseline: 80, endedAt: end, samples: [(end - 5, 81), (end + 40, 85)]) == 40)
 }
 @MainActor @Test func logStoresWatchValues() {
-    let r = AppModel(context: ModelContainer.empty.mainContext)
+    let r = AppModel(container: .empty)
         .log(title: "t", before: .nervous, after: .calm, watch: WatchResult(peakHeartRate: 112, recoverySeconds: 65))
     #expect(r.peakHeartRate == 112 && r.recoverySeconds == 65)
 }
 @MainActor @Test func logWithoutWatchLeavesNil() {
-    let r = AppModel(context: ModelContainer.empty.mainContext).log(title: "t", before: .nervous, after: .calm)
+    let r = AppModel(container: .empty).log(title: "t", before: .nervous, after: .calm)
     #expect(r.peakHeartRate == nil && r.recoverySeconds == nil)
 }
 ```
 
 - [ ] **Step 2:** Correr → FAIL.
 - [ ] **Step 3:** Implementar.
-- [ ] **Step 4:** Correr → PASS (23 tests). Commit: `"Add WatchResult and recovery rule"`.
+- [ ] **Step 4:** `Checks/run.sh` → `all checks OK` (26 chequeos). Commit: `"Add WatchResult and recovery rule"`.
 
 ### Task C2: Target de watchOS con HealthKit
 
