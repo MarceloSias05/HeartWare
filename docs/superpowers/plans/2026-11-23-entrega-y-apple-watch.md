@@ -34,6 +34,8 @@
 | C | C8 Gráficas en el PDF (Swift Charts) | ✅ Hecha: `1742520` en `feat/pdf-charts`. Página "Trends": miedo antes/después, pulso máximo por paso, y día por día de pasos, pulso en reposo, presión, HRV, velocidad al caminar y oxígeno, con línea del día en que se unió |
 | C | C9 Párrafo para el doctor con Foundation Models | ✅ Hecha en `feat/pdf-charts`. Apple Intelligence en el iPhone escribe 3–4 frases solo con los datos del PDF; si no está disponible, no hay párrafo. Agregar **FoundationModels** y **Swift Charts** a la lista de Frameworks de la entrega |
 | C | C10 Sentimiento con cara y slider (pedido por Marcelo) | ✅ Hecha en `feat/feeling-slider` (desde main). `FeelingPage`: cara que cambia de asustada a tranquila, fondo ámbar → menta, palabra grande, slider que se ajusta a 4 sentimientos, háptica y VoiceOver. Reemplaza la lista antes y después del paso |
+| C | C11 Colores por sentimiento y notas | ✅ Hecha. Naranja, amarillo, verde y menta; "Add note" antes y después del paso, las notas salen en el PDF |
+| C | C12 Onboarding: sentimiento inicial, condición sin preseleccionar, Apple Health | ✅ Hecha. 5 páginas; el sentimiento de hoy es el inicio de la tendencia de miedo; permiso de Salud explicado al final |
 
 **Entregables hoy:**
 - **App Name:** sin decidir (Heartware / Hearthware).
