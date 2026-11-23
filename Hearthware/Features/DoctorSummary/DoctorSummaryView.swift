@@ -118,7 +118,8 @@ struct DoctorSummary {
             symptoms: symptoms.suffix(Self.maxSymptoms).map { "\($0.date.formatted(f)): \($0.symptom)\($0.urgent ? " (urgent)" : "")" })
     }
 
-    static let stepsPerPage = 45
+    /// Lines of the steps table that fit on one page (a step is 1 line, each note up to 2 more).
+    static let stepLinesPerPage = 45
     /// Most recent symptoms listed on page 1.
     static let maxSymptoms = 10
 
@@ -131,7 +132,8 @@ struct DoctorSummary {
     var hasTrends: Bool { records.count >= 2 || !trendCards.isEmpty }
 
     var pages: [Page] {
-        let steps = SummaryFacts.stepPages(count: records.count, first: Self.stepsPerPage, rest: Self.stepsPerPage)
+        let steps = SummaryFacts.stepPages(weights: records.map { StepRecord.noteWeight(before: $0.noteBefore, after: $0.noteAfter) },
+                                           capacity: Self.stepLinesPerPage)
         return [.overview] + (hasTrends ? [.trends] : []) + (health == nil ? [] : [.measures]) + steps.map { .steps($0) }
     }
     var pageCount: Int { pages.count }
@@ -341,6 +343,16 @@ struct DoctorPDFPage: View {
                         Text(r.recoverySeconds.map { "\($0 / 60) min \($0 % 60) s" } ?? "Not yet")
                     }
                     .font(.system(size: 9))
+                    // A view outside GridRow spans every column: the patient's own words under their step.
+                    ForEach([("Before", r.noteBefore), ("After", r.noteAfter)], id: \.0) { when, note in
+                        if let note {
+                            Text("\(when): “\(note)”")
+                                .font(.system(size: 8.5).italic())
+                                .foregroundStyle(grey)
+                                .lineLimit(2)
+                                .padding(.leading, 12)
+                        }
+                    }
                 }
             }
         }
@@ -352,7 +364,7 @@ struct DoctorPDFPage: View {
         VStack(alignment: .leading, spacing: 4) {
             Divider()
             if page == summary.pageCount - 1 {
-                Text("Values come from Apple Health and Apple Watch and may differ from clinical devices. Only measures with data are listed. Alerts read \"None\" when there were none or when they are not shared. Fear and symptoms are reported by the patient. This summary is not a diagnosis.")
+                Text("Values come from Apple Health and Apple Watch and may differ from clinical devices. Only measures with data are listed. Alerts read \"None\" when there were none or when they are not shared. Fear, notes and symptoms are reported by the patient. This summary is not a diagnosis.")
                     .fixedSize(horizontal: false, vertical: true)
             }
             Text("\(summary.name)  ·  Generated \(day(summary.generated))  ·  Page \(page + 1) of \(summary.pageCount)")

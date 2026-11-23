@@ -20,6 +20,8 @@ struct StepFlowView: View {
     @State private var phase: Phase = .before
     @State private var before: Feeling = .nervous
     @State private var after: Feeling = .calm
+    @State private var noteBefore = ""
+    @State private var noteAfter = ""
     @State private var record: StepRecord?
     @State private var watchResult: WatchResult?
 
@@ -77,6 +79,7 @@ struct StepFlowView: View {
             footnote: "\(idea.hint)\nThere is no wrong answer. Feeling scared is normal.",
             buttonTitle: watchLink.canUseWatch ? "Start on Apple Watch" : "Start your step",
             feeling: $before,
+            note: $noteBefore,
             action: { if idea.bigStep { phase = .askDoctor } else { begin() } }
         )
     }
@@ -120,8 +123,10 @@ struct StepFlowView: View {
             question: "How did it feel?",
             buttonTitle: "See what your body did",
             feeling: $after,
+            note: $noteAfter,
             action: {
-                record = model.log(title: idea.title, before: before, after: after, watch: watchResult)
+                record = model.log(title: idea.title, before: before, after: after, watch: watchResult,
+                                   noteBefore: noteBefore, noteAfter: noteAfter)
                 phase = .result
             }
         )

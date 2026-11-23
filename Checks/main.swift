@@ -83,9 +83,16 @@ let joined = Date(timeIntervalSince1970: 1_000_000_000), nowD = joined.addingTim
 let win = HealthReport.windows(joined: joined, now: nowD)
 check(win.before.end == joined && win.before.duration == 30 * 86_400, "beforeWindowEndsAtJoin")
 check(win.recent.end == nowD && win.recent.duration == 7 * 86_400, "recentWindowIsLastWeek")
-check(SummaryFacts.stepPages(count: 0, first: 25, rest: 40) == [0..<0], "stepPagesEmptyStillOnePage")
-check(SummaryFacts.stepPages(count: 30, first: 25, rest: 40) == [0..<25, 25..<30], "stepPagesSplit")
-check(SummaryFacts.stepPages(count: 90, first: 25, rest: 40) == [0..<25, 25..<65, 65..<90], "stepPagesMany")
+check(SummaryFacts.stepPages(weights: [], capacity: 40) == [0..<0], "stepPagesEmptyStillOnePage")
+check(SummaryFacts.stepPages(weights: Array(repeating: 1, count: 90), capacity: 40) == [0..<40, 40..<80, 80..<90], "stepPagesByCount")
+check(SummaryFacts.stepPages(weights: [1, 3, 3, 1], capacity: 4) == [0..<2, 2..<4], "stepPagesRowsWithNotesTakeMoreRoom")
+check(SummaryFacts.stepPages(weights: [9, 1], capacity: 4) == [0..<1, 1..<2], "stepPagesOversizedRowStillPlaced")
+check(StepRecord.noteWeight(before: "Knees shaking", after: nil) == 3 && StepRecord.noteWeight(before: nil, after: nil) == 1, "noteWeight")
+MainActor.assumeIsolated {
+    let m = AppModel(container: .empty)
+    let r = m.log(title: "Walk", before: .nervous, after: .calm, noteBefore: "  Knees shaking ", noteAfter: "   ")
+    check(r.noteBefore == "Knees shaking" && r.noteAfter == nil, "notesTrimmedAndBlankIsNil")
+}
 
 // Trends for charts
 check(HealthMetric.bloodOxygen.chartValue(0.97) == 97, "chartPercentIsTimes100")

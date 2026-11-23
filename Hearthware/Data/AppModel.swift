@@ -45,9 +45,15 @@ final class AppModel {
     }
 
     @discardableResult
-    func log(title: String, before: Feeling, after: Feeling, watch: WatchResult? = nil) -> StepRecord {
+    func log(title: String, before: Feeling, after: Feeling, watch: WatchResult? = nil,
+             noteBefore: String? = nil, noteAfter: String? = nil) -> StepRecord {
+        func clean(_ note: String?) -> String? {
+            let text = note?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return text.isEmpty ? nil : text
+        }
         let record = StepRecord(date: .now, title: title, before: before, after: after,
-                                peakHeartRate: watch?.peakHeartRate, recoverySeconds: watch?.recoverySeconds)
+                                peakHeartRate: watch?.peakHeartRate, recoverySeconds: watch?.recoverySeconds,
+                                noteBefore: clean(noteBefore), noteAfter: clean(noteAfter))
         context.insert(record)
         save()
         return record

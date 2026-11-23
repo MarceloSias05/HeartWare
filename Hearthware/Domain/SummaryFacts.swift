@@ -43,13 +43,19 @@ enum SummaryFacts {
     }
 
     /// Index ranges of the steps table per page: `first` rows on the first page that has it, `rest` after.
-    static func stepPages(count: Int, first: Int, rest: Int) -> [Range<Int>] {
-        var pages = [0..<min(count, first)]
-        var start = pages[0].upperBound
-        while start < count {
-            pages.append(start..<min(count, start + rest))
-            start += rest
+    /// Splits rows into pages by the room each takes (a row with notes takes more). Always one page.
+    static func stepPages(weights: [Int], capacity: Int) -> [Range<Int>] {
+        var pages: [Range<Int>] = []
+        var start = 0, used = 0
+        for (i, w) in weights.enumerated() {
+            if used + w > capacity && i > start {
+                pages.append(start..<i)
+                start = i
+                used = 0
+            }
+            used += w
         }
+        pages.append(start..<weights.count)
         return pages
     }
 
