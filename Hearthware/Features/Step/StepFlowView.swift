@@ -185,7 +185,7 @@ struct WithYouView: View {
     var body: some View {
         VStack(spacing: 16) {
             Spacer()
-            OrbView(calm: !slowDown, size: 180)
+            OrbView(calm: !slowDown, size: 180, pulses: true)
             Text(slowDown ? "Slow down a little" : "You're doing well")
                 .font(.title.bold())
                 .padding(.top, 24)
