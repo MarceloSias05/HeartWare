@@ -45,6 +45,11 @@ struct StoryView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(model.fearIsShrinking ? "Your fear is getting smaller" : "Your story starts here")
                     .font(.title3.bold())
+                if let goal = model.goalTitle {
+                    Text("Working towards: \(goal)")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.hwSecondary)
+                }
                 Text("Every step you took, from the first one to today.")
                     .font(.subheadline)
                     .foregroundStyle(Color.hwSecondary)
@@ -61,7 +66,13 @@ struct StoryView: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(model.fearIsShrinking ? "Your fear is getting smaller with every step." : "No steps yet.")
+        .accessibilityLabel(fearCardLabel)
+    }
+
+    private var fearCardLabel: String {
+        let fear = model.fearIsShrinking ? "Your fear is getting smaller with every step." : "No steps yet."
+        guard let goal = model.goalTitle else { return fear }
+        return "Working towards: \(goal). \(fear)"
     }
 
     private func momentRow(_ record: StepRecord) -> some View {
