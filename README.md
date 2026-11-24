@@ -169,6 +169,9 @@ To try the Watch:
 ## Team
 
 - **Marcelo Sias:** [GitHub](https://github.com/MarceloSias05) · [Portfolio](https://marcelosias.vercel.app)
-- **Guillermo Lira**
+- **Guillermo Lira:** [GitHub](https://github.com/2kLira)
+- **Himawant:** [GitHub](https://github.com/himawant)
+- **Aleksandra:** [GitHub](https://github.com/Aleksandra20022)
+- **Ghazaleh**
 
 > Heartware supports a recovery that a clinician is already supervising. It does not diagnose, and its summary is not a medical record.
