@@ -65,9 +65,10 @@ enum SummaryFacts {
     /// The facts handed to the on-device model. Only what the PDF already shows, so nothing new can appear.
     static func narrativePrompt(name: String, condition: String, goal: String, daysInApp: Int,
                                 ladder: (rung: Int, total: Int), stepsLogged: Int,
-                                facts: [String], symptoms: [String]) -> String {
+                                facts: [String], symptoms: [String], body: String? = nil) -> String {
         var lines = [
             "Patient: \(name). Condition: \(condition). Personal goal: \(goal).",
+            body.map { "From Apple Health: \($0)." } ?? "Age and sex: unknown.",
             "Using Hearthware for \(daysInApp) days. \(stepsLogged) small exposure steps logged; now at step \(ladder.rung) of \(ladder.total) towards the goal.",
         ]
         lines += facts.map { "- \($0)" }

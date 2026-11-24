@@ -127,6 +127,25 @@ check(SummaryFacts.isGrounded("Fear moved from very scared to calm.", in: prompt
 check(SummaryFacts.narrativePrompt(name: "A", condition: "C", goal: "G", daysInApp: 1, ladder: (1, 3), stepsLogged: 0,
                                    facts: [], symptoms: []).contains("Symptoms reported: none"), "promptSaysNoSymptoms")
 
+// Body data from Health
+var cal = Calendar(identifier: .gregorian); cal.timeZone = TimeZone(identifier: "UTC")!
+let today = cal.date(from: DateComponents(year: 2026, month: 11, day: 24))!
+check(BodyProfile.age(birth: DateComponents(year: 1974, month: 11, day: 25), now: today, calendar: cal) == 51, "ageBeforeBirthday")
+check(BodyProfile.age(birth: DateComponents(year: 1974, month: 11, day: 24), now: today, calendar: cal) == 52, "ageOnBirthday")
+check(BodyProfile.age(birth: DateComponents(month: 3, day: 1), now: today, calendar: cal) == nil, "noYearNoAge")
+let body = BodyProfile(age: 52, sex: "Male", heightCm: 175, weightKg: 82)
+check(body.bmi.map { String(format: "%.1f", $0) } == "26.8", "bmiFromWeightAndHeight")
+check(body.line == "52 years · Male · 175 cm · 82 kg · BMI 26.8", "bodyLine")
+check(BodyProfile(age: nil, sex: nil, heightCm: nil, weightKg: 70).line == "70 kg", "bodyLineOnlyWhatExists")
+check(BodyProfile().line == nil, "emptyBodyHasNoLine")
+check(HealthMetric.weight.format(81.96) == "82.0 kg" && HealthMetric.weight.section == .body, "weightMetric")
+check(MetricReading(metric: .weight, before: 86, recent: 82).change == "↓ 4.0 kg", "weightChangeInKilos")
+check(MetricReading(metric: .weight, before: 82, recent: 82.3).change == "≈", "weightUnderHalfKiloIsFlat")
+let withBody = SummaryFacts.narrativePrompt(name: "Ana", condition: "Heart attack", goal: "G", daysInApp: 3, ladder: (1, 3),
+                                            stepsLogged: 0, facts: [], symptoms: [], body: body.line)
+check(withBody.contains("52 years"), "promptHasBody")
+check(SummaryFacts.isGrounded("Ana is 52 years old.", in: withBody), "ageFromHealthIsGrounded")
+
 // AppModel + SwiftData
 MainActor.assumeIsolated {
     let m = AppModel(container: .empty)

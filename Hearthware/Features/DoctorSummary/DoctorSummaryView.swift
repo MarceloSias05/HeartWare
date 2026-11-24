@@ -119,7 +119,8 @@ struct DoctorSummary {
             daysInApp: max(1, Calendar.current.dateComponents([.day], from: joined, to: generated).day ?? 0),
             ladder: SummaryFacts.ladderPosition(goal: goal, records: records), stepsLogged: records.count,
             facts: glance,
-            symptoms: symptoms.suffix(Self.maxSymptoms).map { "\($0.date.formatted(f)): \($0.symptom)\($0.urgent ? " (urgent)" : "")" })
+            symptoms: symptoms.suffix(Self.maxSymptoms).map { "\($0.date.formatted(f)): \($0.symptom)\($0.urgent ? " (urgent)" : "")" },
+            body: health?.body?.line)
     }
 
     /// Lines of the steps table that fit on one page (a step is 1 line, each note up to 2 more).
@@ -169,6 +170,7 @@ struct DoctorPDFPage: View {
                 if let health = summary.health {
                     healthTable("Heart", health.shown(in: .heart))
                     healthTable("Movement and tiredness", health.shown(in: .movement))
+                    healthTable("Body", health.shown(in: .body))
                 }
             case .steps(let rows):
                 stepsTable(rows)
@@ -196,6 +198,9 @@ struct DoctorPDFPage: View {
             Text(summary.name).font(.system(size: 24, weight: .bold))
             Text("\(summary.conditionTitle ?? "Heart condition")  ·  Goal: \(summary.goalTitle ?? "Not set")  ·  Created by the patient")
                 .font(.system(size: 11)).foregroundStyle(grey)
+            if let body = summary.health?.body?.line {
+                Text(body).font(.system(size: 11, weight: .semibold))
+            }
             Text("Using Hearthware since \(day(summary.joined))  ·  Generated \(day(summary.generated))")
                 .font(.system(size: 11)).foregroundStyle(grey)
             Divider()

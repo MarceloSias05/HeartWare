@@ -15,7 +15,7 @@ enum DoctorNarrative {
     private static let instructions = """
         You write the opening paragraph of a patient summary for a cardiologist.
         Use only the facts given. Never invent numbers, dates or symptoms.
-        The patient's age and sex are unknown: never mention them.
+        Mention age or sex only if the facts give them; never guess them.
         Do not diagnose, do not recommend treatment, do not say whether a change is good or bad.
         Third person, plain clinical English, 3 or 4 sentences, under 90 words. No headings, no lists.
         """

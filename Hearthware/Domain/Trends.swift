@@ -22,7 +22,7 @@ nonisolated enum TrendCharts {
     /// One chart per group; blood pressure draws systolic and diastolic together.
     static let groups: [[HealthMetric]] = [
         [.steps], [.restingHeartRate], [.systolic, .diastolic],
-        [.heartRateVariability], [.walkingSpeed], [.bloodOxygen],
+        [.heartRateVariability], [.walkingSpeed], [.bloodOxygen], [.weight],
     ]
     static var metrics: [HealthMetric] { groups.flatMap { $0 } }
 
@@ -59,6 +59,7 @@ extension HealthMetric {
         case .walkingSpeed: "km/h"
         case .stepLength: "cm"
         case .sixMinuteWalk: "m"
+        case .weight: "kg"
         case .irregularRhythmAlerts, .highHeartRateAlerts, .lowHeartRateAlerts, .ecgRecordings: ""
         }
     }

@@ -39,6 +39,7 @@
 | C | C13 Texto libre en "Something else" de la condición; página de Salud con scroll | ✅ Hecha. Sale en el PDF y en el párrafo |
 | C | C14 Ícono nuevo: "circuit heart" | ✅ Hecha. Corazón de pistas de circuito (hardware), pulso adentro (corazón) y pista ámbar que sube (longevidad). Light, dark, tinted y Watch; se regenera con `docs/app-icon.swift` |
 | C | C15 El párrafo de Apple Intelligence no puede inventar datos | ✅ Hecha. Inventó una edad (24) que la app nunca pide. Ahora: las instrucciones prohíben mencionar edad y sexo, y cada número del párrafo debe estar en los datos que recibió; si no, se genera otra vez y, si vuelve a fallar, el PDF sale sin párrafo |
+| C | C16 Datos del cuerpo desde Apple Health | ✅ Hecha. Encabezado del PDF: edad, sexo, altura, peso e IMC (calculado); tabla "Body" y gráfica de peso, con el cambio en kg (subir unos kilos puede ser retención de líquido). El párrafo menciona la edad solo si viene de Salud |
 
 **Entregables hoy:**
 - **App Name:** sin decidir (Heartware / Hearthware).

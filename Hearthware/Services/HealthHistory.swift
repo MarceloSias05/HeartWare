@@ -52,11 +52,13 @@ enum HealthHistory {
         case .doubleSupport: .average(.walkingDoubleSupportPercentage, .percent())
         case .walkingSteadiness: .average(.appleWalkingSteadiness, .percent())
         case .sixMinuteWalk: .average(.sixMinuteWalkTestDistance, .meter())
+        case .weight: .average(.bodyMass, .gramUnit(with: .kilo))
         }
     }
 
     private static var readTypes: Set<HKObjectType> {
-        var types: Set<HKObjectType> = [HKObjectType.electrocardiogramType()]
+        var types: Set<HKObjectType> = [HKObjectType.electrocardiogramType(), HKQuantityType(.height),
+                                        HKCharacteristicType(.dateOfBirth), HKCharacteristicType(.biologicalSex)]
         for metric in HealthMetric.allCases {
             switch source(metric) {
             case .average(let id, _), .perDay(let id, _): types.insert(HKQuantityType(id))
@@ -99,7 +101,27 @@ enum HealthHistory {
 
         return HealthReport(readings: HealthMetric.allCases.map {
             MetricReading(metric: $0, before: values[$0]?.before, recent: values[$0]?.recent)
-        }, trends: trends)
+        }, body: await body(now: now), trends: trends)
+    }
+
+    /// Age and sex from the Health profile, latest height and weight. Nil fields when not set or not shared.
+    private static func body(now: Date) async -> BodyProfile {
+        let sex: String? = switch (try? store.biologicalSex())?.biologicalSex {
+        case .female: "Female"
+        case .male: "Male"
+        case .other: "Other"
+        default: nil
+        }
+        return BodyProfile(age: (try? store.dateOfBirthComponents()).flatMap { BodyProfile.age(birth: $0, now: now) },
+                           sex: sex,
+                           heightCm: await latest(.height, .meterUnit(with: .centi)),
+                           weightKg: await latest(.bodyMass, .gramUnit(with: .kilo)))
+    }
+
+    private static func latest(_ id: HKQuantityTypeIdentifier, _ unit: HKUnit) async -> Double? {
+        let query = HKSampleQueryDescriptor(predicates: [.quantitySample(type: HKQuantityType(id))],
+                                            sortDescriptors: [SortDescriptor(\.endDate, order: .reverse)], limit: 1)
+        return (try? await query.result(for: store))?.first?.quantity.doubleValue(for: unit)
     }
 
     /// One value per day with data: the day's average, or its total for steps and other counts.

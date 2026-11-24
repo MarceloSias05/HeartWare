@@ -17,13 +17,16 @@ nonisolated enum HealthMetric: String, CaseIterable, Sendable {
     // Movement and tiredness
     case steps, exerciseMinutes, flightsClimbed, walkingSpeed, stepLength
     case walkingAsymmetry, doubleSupport, walkingSteadiness, sixMinuteWalk
+    // Body
+    case weight
 
-    enum Section: Sendable { case heart, movement }
+    enum Section: Sendable { case heart, movement, body }
 
     var section: Section {
         switch self {
         case .steps, .exerciseMinutes, .flightsClimbed, .walkingSpeed, .stepLength,
              .walkingAsymmetry, .doubleSupport, .walkingSteadiness, .sixMinuteWalk: .movement
+        case .weight: .body
         default: .heart
         }
     }
@@ -55,6 +58,7 @@ nonisolated enum HealthMetric: String, CaseIterable, Sendable {
         case .doubleSupport: "Double support time"
         case .walkingSteadiness: "Walking steadiness"
         case .sixMinuteWalk: "Six-minute walk (estimated)"
+        case .weight: "Weight"
         }
     }
 
@@ -84,6 +88,7 @@ nonisolated enum HealthMetric: String, CaseIterable, Sendable {
         case .walkingSpeed: String(format: "%.1f km/h", value)
         case .stepLength: "\(Int(value.rounded())) cm"
         case .sixMinuteWalk: "\(Int(value.rounded())) m"
+        case .weight: String(format: "%.1f kg", value)
         }
     }
 
@@ -108,6 +113,11 @@ nonisolated struct MetricReading: Sendable {
             let diff = Int(recent - before)
             return diff == 0 ? "≈" : diff > 0 ? "↑ \(diff)" : "↓ \(-diff)"
         }
+        // A few kilos matter for a heart (fluid retention), so weight changes are shown in kg.
+        if metric == .weight {
+            let diff = recent - before
+            return abs(diff) < 0.5 ? "≈" : String(format: "%@ %.1f kg", diff > 0 ? "↑" : "↓", abs(diff))
+        }
         guard before != 0 else { return "–" }
         let percent = (recent - before) / before * 100
         if abs(percent) < 5 { return "≈" }
@@ -117,6 +127,8 @@ nonisolated struct MetricReading: Sendable {
 
 nonisolated struct HealthReport: Sendable {
     var readings: [MetricReading]
+    /// Age, sex, height, weight and BMI, latest values.
+    var body: BodyProfile? = nil
     /// Day-by-day values from 30 days before joining until today, for the charts.
     var trends: [TrendSeries] = []
 
