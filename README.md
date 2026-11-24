@@ -13,6 +13,7 @@
   <img src="https://img.shields.io/badge/iOS-26%2B-000000?logo=apple" alt="iOS 26+">
   <img src="https://img.shields.io/badge/watchOS-27.2%2B-000000?logo=apple" alt="watchOS 27.2+">
   <img src="https://img.shields.io/badge/AI-on--device%20Foundation%20Models-00C2A8" alt="On-device Foundation Models">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"></a>
 </p>
 
 <p align="center">
@@ -173,5 +174,9 @@ To try the Watch:
 - **Himawant:** [GitHub](https://github.com/himawant)
 - **Aleksandra:** [GitHub](https://github.com/Aleksandra20022)
 - **Ghazaleh**
+
+## License
+
+[MIT](LICENSE)
 
 > Heartware supports a recovery that a clinician is already supervising. It does not diagnose, and its summary is not a medical record.
