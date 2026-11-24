@@ -2,7 +2,7 @@
 //  TodayView.swift
 //  Hearthware
 //
-//  Three things only: how your body is, today's step (pinned at the bottom), and your story.
+//  One page: how your body is, today's step, your story, and "Not feeling well".
 //
 
 import SwiftUI
@@ -18,6 +18,16 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     header
                     stateCard
+                    Button {
+                        showingStep = true
+                    } label: {
+                        Text("Your step  ·  \(model.todayStep.title)")
+                            .lineLimit(2)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 16)
+                    }
+                    .buttonStyle(.pill)
+                    .accessibilityHint("Starts today's step")
                     NavigationLink {
                         StoryView()
                     } label: {
@@ -27,40 +37,6 @@ struct TodayView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
-            }
-            // The main action stays in reach on any phone and text size; the cards scroll behind it.
-            .safeAreaInset(edge: .bottom) {
-                Button {
-                    showingStep = true
-                } label: {
-                    Text("Your step  ·  \(model.todayStep.title)")
-                        .lineLimit(2)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 16)
-                }
-                .buttonStyle(.pill)
-                .accessibilityHint("Starts today's step")
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(Color(uiColor: .systemBackground))
-            }
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    // Red and with words: the toolbar would otherwise show a grey icon only, easy to miss.
-                    Button {
-                        showingHelp = true
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "heart.text.square.fill")
-                            Text("Not feeling well")
-                        }
-                        .font(.subheadline.weight(.semibold))
-                        .fixedSize()
-                    }
-                    .buttonStyle(.glassProminent)
-                    .tint(Color.hwRed)
-                    .accessibilityLabel("Not feeling well")
-                }
             }
             .sheet(isPresented: $showingStep) {
                 StepFlowView(idea: model.todayStep)
@@ -73,9 +49,22 @@ struct TodayView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(Date.now, format: .dateTime.weekday(.wide).day().month(.wide))
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Color.hwSecondary)
+            HStack {
+                Text(Date.now, format: .dateTime.weekday(.wide).day().month(.wide))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.hwSecondary)
+                Spacer()
+                // Part of the page, red and with words, so it is never missed and moves with the rest.
+                Button {
+                    showingHelp = true
+                } label: {
+                    Label("Not feeling well", systemImage: "heart.text.square.fill")
+                        .font(.subheadline.weight(.semibold))
+                }
+                .buttonStyle(.borderedProminent)
+                .buttonBorderShape(.capsule)
+                .tint(Color.hwRed)
+            }
             Text("Good morning,\n\(model.name)")
                 .font(.largeTitle.bold())
                 .accessibilityAddTraits(.isHeader)
@@ -87,8 +76,8 @@ struct TodayView: View {
         let state = model.todayState
         return Container {
             VStack(spacing: 12) {
-                OrbView(calm: state.calm, size: 124)
-                    .padding(.vertical, 28)
+                OrbView(calm: state.calm, size: 96)
+                    .padding(.vertical, 12)
                 Text(state.title)
                     .font(.title.bold())
                 Text(state.detail)
