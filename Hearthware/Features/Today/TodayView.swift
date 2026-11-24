@@ -2,7 +2,7 @@
 //  TodayView.swift
 //  Hearthware
 //
-//  Three things only: how your body is, today's step, and your story.
+//  Three things only: how your body is, today's step (pinned at the bottom), and your story.
 //
 
 import SwiftUI
@@ -18,17 +18,6 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     header
                     stateCard
-                    Button {
-                        showingStep = true
-                    } label: {
-                        Text("Your step  ·  \(model.todayStep.title)")
-                            .lineLimit(2)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 16)
-                    }
-                    .buttonStyle(.pill)
-                    .accessibilityHint("Starts today's step")
-
                     NavigationLink {
                         StoryView()
                     } label: {
@@ -38,6 +27,22 @@ struct TodayView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
+            }
+            // The main action stays in reach on any phone and text size; the cards scroll behind it.
+            .safeAreaInset(edge: .bottom) {
+                Button {
+                    showingStep = true
+                } label: {
+                    Text("Your step  ·  \(model.todayStep.title)")
+                        .lineLimit(2)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16)
+                }
+                .buttonStyle(.pill)
+                .accessibilityHint("Starts today's step")
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Color(uiColor: .systemBackground))
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
