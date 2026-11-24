@@ -46,13 +46,19 @@ struct TodayView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
+                    // Red and with words: the toolbar would otherwise show a grey icon only, easy to miss.
                     Button {
                         showingHelp = true
                     } label: {
-                        Label("Not feeling well", systemImage: "heart.text.square")
-                            .labelStyle(.titleAndIcon)
-                            .foregroundStyle(Color.hwRed)
+                        HStack(spacing: 6) {
+                            Image(systemName: "heart.text.square.fill")
+                            Text("Not feeling well")
+                        }
+                        .font(.subheadline.weight(.semibold))
+                        .fixedSize()
                     }
+                    .buttonStyle(.glassProminent)
+                    .tint(Color.hwRed)
                     .accessibilityLabel("Not feeling well")
                 }
             }
