@@ -13,7 +13,6 @@
   <img src="https://img.shields.io/badge/iOS-26%2B-000000?logo=apple" alt="iOS 26+">
   <img src="https://img.shields.io/badge/watchOS-27.2%2B-000000?logo=apple" alt="watchOS 27.2+">
   <img src="https://img.shields.io/badge/AI-on--device%20Foundation%20Models-00C2A8" alt="On-device Foundation Models">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"></a>
 </p>
 
 <p align="center">
@@ -169,14 +168,16 @@ To try the Watch:
 
 ## Team
 
-- **Marcelo Sias:** [GitHub](https://github.com/MarceloSias05) · [Portfolio](https://marcelosias.vercel.app)
-- **Guillermo Lira:** [GitHub](https://github.com/2kLira)
-- **Himawant:** [GitHub](https://github.com/himawant)
-- **Aleksandra:** [GitHub](https://github.com/Aleksandra20022)
-- **Ghazaleh**
+| Name | GitHub |
+|---|---|
+| Marcelo Sias | [@MarceloSias05](https://github.com/MarceloSias05) · [Portfolio](https://marcelosias.vercel.app) |
+| Guillermo Lira | [@2kLira](https://github.com/2kLira) |
+| Himawant | [@himawant](https://github.com/himawant) |
+| Aleksandra | [@Aleksandra20022](https://github.com/Aleksandra20022) |
+| Ghazaleh | — |
 
-## License
+## Copyright
 
-[MIT](LICENSE)
+© 2026 The Heartware team. All rights reserved. This code is shared for viewing only; it may not be copied, modified or used without written permission.
 
 > Heartware supports a recovery that a clinician is already supervising. It does not diagnose, and its summary is not a medical record.
