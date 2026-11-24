@@ -1,147 +1,174 @@
-# Heartware
+<p align="center">
+  <img src="docs/screenshots/icon.png" width="120" alt="Heartware app icon: a heart drawn as circuit traces">
+</p>
 
-Getting back to your life after a heart problem, one small step at a time.
+<h1 align="center">Heartware</h1>
 
-After a heart attack, heart surgery or a new diagnosis, everyday things like climbing the stairs, walking to the market or playing with the grandkids can feel frightening. Hearthware turns the goal the person wants back into a ladder of small steps. Before and after each step it asks how they feel, in words and never as a score. The patient never sees numbers. Their doctor gets them all in a PDF summary.
+<p align="center">
+  <b>An iPhone and Apple Watch app that helps heart patients get their life back, one small step at a time. Their cardiologist gets the data.</b>
+</p>
 
+<p align="center">
+  <img src="https://img.shields.io/badge/Swift-SwiftUI-F05138?logo=swift&logoColor=white" alt="Swift and SwiftUI">
+  <img src="https://img.shields.io/badge/iOS-26%2B-000000?logo=apple" alt="iOS 26+">
+  <img src="https://img.shields.io/badge/watchOS-27.2%2B-000000?logo=apple" alt="watchOS 27.2+">
+  <img src="https://img.shields.io/badge/AI-on--device%20Foundation%20Models-00C2A8" alt="On-device Foundation Models">
+</p>
 
-## What it does
+<p align="center">
+  <img src="docs/screenshots/iphone-today.png" height="460" alt="iPhone Today screen">
+  &nbsp;
+  <img src="docs/screenshots/watch-picker.png" height="230" alt="Apple Watch feeling picker">
+  &nbsp;
+  <img src="docs/screenshots/pdf-overview.png" height="460" alt="Doctor summary PDF, page 1 (sample data)">
+</p>
 
-### On the iPhone
-- **Onboarding** in 5 pages:
-  1. Name.
-  2. Goal, from a list or in their own words.
-  3. How they feel about that goal today, picked with the face slider.
-  4. What happened to their heart, from a list or in their own words.
-  5. Connecting Apple Health (read only).
-- **Today:** the next step on the ladder for their goal.
-- **A step:**
-  - How do you feel about it? A face you slide from *very scared* to *calm*; the screen takes the feeling's colour.
-  - Big steps ask the person to check with their doctor first.
-  - The step itself, on the Apple Watch when there is one.
-  - How did it feel? Then what the body did.
-  - An optional note before and after.
-- **Not feeling well:**
-  - Chest pain or strong breathlessness go straight to the emergency number.
-  - Anything else is saved for the doctor, with a check-in notification an hour later.
-- **Story:** how the fear has been shrinking.
-- **For your doctor:** a multi-page PDF. It contains:
-  - A short paragraph written on device by Apple Intelligence.
-  - At a glance and how the patient feels: fear trend, ladder position, symptoms.
-  - Age, sex, height, weight and BMI from Apple Health.
-  - Swift Charts trends from 30 days before joining until today.
-  - Heart, movement and body tables (before joining vs. the last 7 days).
-  - Every step with its notes.
+---
+
+## The problem
+
+After a heart attack, heart surgery or a new diagnosis, many patients become afraid of their own heart. Climbing the stairs, walking to the market or playing with the grandkids starts to feel dangerous, so they stop. That fear is a recognised barrier to recovery. Meanwhile, the cardiologist sees the patient for a few minutes every few weeks and has to piece together what happened in between.
+
+## What Heartware does
+
+| For the patient | For the doctor |
+|---|---|
+| Turns the goal they want back ("Climbing my stairs") into a **ladder of small steps** | A **multi-page PDF**, shared from the phone with one tap |
+| Asks how they feel **before and after each step**, as a face, a colour and a word, **never a number** | **Trends from Apple Health:** 30 days before the patient joined vs. now, with Swift Charts |
+| **Apple Watch** keeps them company during the step and measures the heart rate and how fast it recovers | **26 metrics:** heart rate, HRV, blood pressure and mean arterial pressure, SpO₂, VO₂ max, AFib burden, rhythm alerts, walking asymmetry, six-minute walk, weight… |
+| **Not feeling well?** Chest pain goes straight to the emergency number; anything else is logged, with a check-in an hour later | **An opening paragraph written on device** by Apple Intelligence, checked against the data before it is used |
+
+<p align="center">
+  <img src="docs/screenshots/feelings.png" width="640" alt="The four feelings: very scared, nervous, a little nervous, calm">
+  <br><sub>Fear as a face, not a score. The same component runs on the iPhone (slider) and the Watch (Digital Crown).</sub>
+</p>
 
 ### On the Apple Watch
-Everything the person reports can also be done from the wrist. It follows the watchOS Human Interface Guidelines:
-- Short interactions and large type.
-- The Digital Crown to pick a value, with haptic feedback.
-- Nothing reported is ever lost.
 
-| Screen | What happens |
-|---|---|
-| **Home** | "Hi Marcelo", today's step, **Start step**, **Not feeling well**. |
-| **Before the step** | "How do you feel about it?" **Turning the Digital Crown** moves through the four feelings (very scared, nervous, a little nervous, calm). The face, the word and the full-screen colour follow, with one haptic detent per feeling. The top-right button adds a note by dictation or Scribble. |
-| **Big step** | "Ask your doctor first": *My doctor said it's OK* / *Not now*. |
-| **During the step** | A walking workout keeps the person company with a soft tap every minute. It measures the peak heart rate, then how long the heart takes to settle back to rest. |
-| **After the step** | "How did it feel?" with the Crown again, plus an optional note. |
-| **Done** | "You did it" (or "You showed up") with the feeling before → after. In words, never numbers. |
-| **Not feeling well** | Urgent symptoms show **Call 112** and a reminder that holding the side button calls Emergency SOS. Other symptoms are noted, and the iPhone sends the one-hour check-in (it also appears on the Watch). |
+Everything can be reported from the wrist. The design follows the watchOS Human Interface Guidelines: short interactions, large type, the **Digital Crown** to pick a feeling with one haptic detent per step, and dictation or Scribble for notes.
 
-A step can still be started from the iPhone. The Watch then takes over the screen until the step ends and sends what it measured back to that step.
+<p align="center">
+  <img src="docs/screenshots/watch-home.png" width="150" alt="Watch home: today's step">
+  <img src="docs/screenshots/watch-picker.png" width="150" alt="Watch: how do you feel, with the Digital Crown">
+  <img src="docs/screenshots/watch-done.png" width="150" alt="Watch: you did it">
+  <img src="docs/screenshots/watch-help.png" width="150" alt="Watch: not feeling well">
+  <img src="docs/screenshots/watch-sos.png" width="150" alt="Watch: call the emergency number">
+</p>
 
-VoiceOver reads each feeling as a word. Swiping up or down changes it, one feeling at a time.
+### The doctor summary
 
-## How the iPhone and the Watch talk
+<p align="center">
+  <img src="docs/screenshots/pdf-overview.png" width="380" alt="PDF page 1: summary, at a glance, symptoms">
+  <img src="docs/screenshots/pdf-trends.png" width="380" alt="PDF page 2: trends charted with Swift Charts">
+  <br><sub>Rendered with sample data.</sub>
+</p>
 
-The iPhone owns all the data, in SwiftData. The Watch keeps nothing of its own; it reports what happened.
+## Engineering highlights
 
+- **On-device generative AI, with a guardrail.**
+  - The opening paragraph of the PDF comes from Apple's **Foundation Models** framework, running on the iPhone.
+  - In testing, the model invented a patient's age. Now every number in its output must appear in the facts it was given (`SummaryFacts.isGrounded`). Otherwise it retries once, then ships the PDF **without** a paragraph rather than with a wrong one.
+  - No health data leaves the phone.
+- **Two apps, one source of truth.**
+  - The iPhone owns all data in **SwiftData**; the Watch keeps nothing of its own.
+  - Watch reports travel over **WatchConnectivity** with `transferUserInfo`. That is a queued, guaranteed delivery, so a step logged on a run with the iPhone at home is saved when they reconnect, with the Watch's original timestamp.
+  - Every step carries an id, so a late result from a cancelled step can never land on the wrong record.
+- **Deep HealthKit integration.**
+  - Statistics and statistics-collection queries (daily series for the charts).
+  - Characteristics (age, biological sex), category events (irregular rhythm, high and low heart rate alerts) and ECGs.
+  - A **live workout session** on the Watch that measures peak heart rate and **heart-rate recovery**: the seconds until the heart is back within 10 bpm of its starting rate.
+- **A real document pipeline in SwiftUI.**
+  - SwiftUI views rendered with `ImageRenderer` into a multi-page A4 PDF.
+  - Pages adapt to the data: a trends page only when there is something to chart, and steps tables paginated by how much room each row takes.
+  - The in-app preview is an image of the same pages, so what the patient sees is exactly what the doctor gets.
+- **Modern Swift concurrency.**
+  - MainActor-by-default isolation.
+  - `nonisolated`, `Sendable` value types for everything that crosses targets or threads.
+  - `async` HealthKit and Foundation Models APIs.
+- **Accessible by default.**
+  - VoiceOver reads feelings as words and adjusts them one at a time.
+  - Dynamic Type layouts that scroll instead of clipping.
+  - Respects Reduce Motion; haptics on every selection.
+- **Tested domain logic.**
+  - Everything that decides something is pure Swift: the step ladder, the PDF facts, pagination, message encoding, onboarding validation.
+  - Covered by **100+ assertions** in `Checks/`, which compile against the real sources and run in seconds.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph Watch["Apple Watch"]
+        WUI["SwiftUI + Digital Crown"] --> WS[WatchStore]
+        WO[StepWorkout<br/>HKWorkoutSession] --> WS
+    end
+    subgraph iPhone
+        UI["SwiftUI features"] --> M["AppModel<br/>@Observable"]
+        M --> SD[(SwiftData)]
+        M --> D["Domain<br/>Coach · SummaryFacts"]
+        HH[HealthHistory] --> HK[(HealthKit)]
+        DN[DoctorNarrative] --> FM[Foundation Models]
+        WL[WatchLink]
+    end
+    WS -- "transferUserInfo (queued)<br/>steps · symptoms" --> WL
+    WL -- "application context<br/>today's step" --> WS
+    WL --> M
 ```
-iPhone ──application context──▶ Watch
-        today's step: name, title, hint, big step?   (kept up to date as the person advances)
-        a step started on the iPhone: id + title     (then HealthKit opens the Watch app)
 
-Watch ──transferUserInfo (queued)──▶ iPhone
-        WatchStepLog   a whole step done on the Watch: date, title, feeling before/after,
-                       peak heart rate, recovery, notes        → saved as a StepRecord
-        WatchSymptom   "Not feeling well": date, symptom, urgent → saved as a SymptomRecord
-                                                                  (+ check-in if not urgent)
-Watch ──sendMessage, falls back to transferUserInfo──▶ iPhone
-        WatchResult    what the Watch measured for a step started on the iPhone
-```
-
-- **Nothing is lost.** Reports use `transferUserInfo`, so they are delivered even if the iPhone is out of range or the app is closed. They arrive the next time the iPhone app runs.
-- **Dates are the Watch's.** A step done on the Watch at 9:00 and delivered at 11:00 is saved at 9:00.
-- **One application context.** Today's step and a step start share the single context dictionary (`WatchLink.context`), so one never wipes out the other.
-- **Every step has an id.** A late result from a cancelled step is ignored, never saved on the wrong step.
-
-The message formats live in `Shared/WatchResult.swift` and are covered by `Checks`.
-
-## Project structure
+- **`AppModel`** is the single source of truth the views observe, and the only place that writes.
+- **`Domain/`** holds pure, testable logic: the step ladder (`Coach`), the PDF facts (`SummaryFacts`), the metric definitions (`HealthMetric`) and the body profile (`BodyProfile`).
+- **`Services/`** wraps the frameworks: HealthKit, WatchConnectivity, notifications and Foundation Models.
+- **`Shared/`** is compiled into both apps: `Feeling`, the face and its colours, the symptom list and the message formats.
 
 ```
 Hearthware/                  iPhone app
-  App/                       entry point, injects AppModel and WatchLink
-  Data/AppModel.swift        the single source of truth the views observe; the only place that writes
-  Domain/                    pure logic: Coach (the ladder), Profile, StepRecord, SymptomRecord,
-                             HealthMetric, SummaryFacts, BodyProfile, Trends
-  Services/                  HealthHistory (Apple Health), WatchLink (the Watch), CheckIn
-                             (notifications), DoctorNarrative (Apple Intelligence)
-  DesignSystem/              colours, pill buttons, QuestionPage, FeelingPage
-  Features/                  Onboarding, Today, Step, Help, Story, DoctorSummary
-HearthwareWatch Watch App/   Watch app
-  WatchHomeView.swift        home, step flow, done, Not feeling well, emergency
-  WatchFeelingPicker.swift   the Digital Crown feeling picker
-  WatchStore.swift           today's step and reporting to the iPhone
-  StepWorkout.swift          the HealthKit workout during a step
-  PhoneLink.swift            WatchConnectivity on the Watch side
-Shared/                      compiled into both apps: Feeling, FeelingFace (face + colours),
-                             SymptomList, WatchResult (messages)
-Checks/                      assert-based checks for Domain, Data and Shared (run.sh)
-docs/app-icon.swift          redraws the app icon
+  App/  Data/  Domain/  Services/  DesignSystem/  Features/
+HearthwareWatch Watch App/   Watch app (home, step flow, Crown picker, workout, phone link)
+Shared/                      code compiled into both targets
+Checks/                      assertion-based tests for Domain, Data and Shared
+docs/                        screenshots, app-icon generator
 ```
 
-## Frameworks
+## Tech stack
 
-| Framework | Used for |
-|---|---|
-| SwiftUI | All the interface, on the iPhone and the Watch |
-| Observation | `AppModel`, `WatchLink`, `WatchStore`, `StepWorkout` |
-| SwiftData | Profile, steps (with notes) and symptoms, on the phone |
-| HealthKit | Heart, movement and body history for the summary; the workout that measures a step on the Watch |
-| WatchConnectivity | Today's step to the Watch; steps, symptoms and results back to the iPhone |
-| WatchKit | The Watch app and its haptics |
-| Swift Charts | The "Trends" page of the PDF |
-| FoundationModels | The doctor paragraph, written on device by Apple Intelligence |
-| UserNotifications | The "How are you feeling now?" check-in an hour after a symptom |
+**SwiftUI** · **SwiftData** · **Observation** · **HealthKit** (queries and live workouts) · **WatchConnectivity** · **WatchKit** · **Swift Charts** · **Foundation Models** · **UserNotifications**
 
-## Privacy
+No third-party dependencies.
 
-- Apple Health is **read only**. Nothing leaves the phone until the person taps **Share PDF**.
-- The Apple Intelligence paragraph is written **on device**. It is checked before use: every number in it must appear in the data it was given, otherwise it is discarded and the PDF goes without it.
-- The patient's screens never show numbers; only the doctor summary does.
+## Privacy by design
 
-## Build and run
+- Apple Health access is **read only**.
+- All data stays on the device until the patient taps **Share PDF**.
+- AI runs **on device**; nothing is sent to a server.
+- The patient's screens never show numbers. Only the doctor summary does.
+
+## Run it
 
 Requirements:
 - Xcode 27.
-- iOS 26+.
-- watchOS 27.2+.
-- The Apple Intelligence paragraph also needs a device that supports it.
+- iOS 26+ and watchOS 27.2+.
+- For the AI paragraph, a device with Apple Intelligence.
 
-```sh
-open Hearthware.xcodeproj      # schemes: "Hearthware" (iPhone) and "HearthwareWatch Watch App"
-Checks/run.sh                  # logic checks, prints "all checks OK"
+```bash
+git clone https://github.com/MarceloSias05/Hearthware.git
+cd Hearthware
+open Hearthware.xcodeproj    # schemes: "Hearthware" (iPhone) and "HearthwareWatch Watch App"
+Checks/run.sh                # domain tests, prints "all checks OK"
 ```
 
 To try the Watch:
-1. Run the **Hearthware** scheme on an iPhone simulator that is paired with a Watch simulator, or on real devices.
+1. Run the **Hearthware** scheme on an iPhone simulator paired with a Watch simulator.
 2. Finish onboarding on the iPhone. The Watch then shows today's step.
-3. On the simulator, turn the Digital Crown with the mouse wheel or trackpad over the Watch window.
+3. Turn the Digital Crown with the trackpad or scroll wheel over the Watch window.
 
-Still to test on real devices:
-- The Crown haptics.
-- Dictating a note.
-- Calling 112.
-- A Watch step showing up on the iPhone.
+## Roadmap
+
+- Emergency number by region (today it is 112).
+- Ask when the heart event happened, and whether the patient is cleared for activity or in cardiac rehab.
+- Field-test the Watch flow and the on-device summary on real devices with real Health histories.
+
+## Team
+
+- **Marcelo Sias:** [GitHub](https://github.com/MarceloSias05) · [Portfolio](https://marcelosias.vercel.app)
+- **Guillermo Lira**
+
+> Heartware supports a recovery that a clinician is already supervising. It does not diagnose, and its summary is not a medical record.
