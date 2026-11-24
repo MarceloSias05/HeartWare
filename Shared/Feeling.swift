@@ -2,13 +2,13 @@
 //  Feeling.swift
 //  Hearthware
 //
-//  How scared the person feels.
+//  How scared the person feels. Shared by the iPhone and the Watch.
 //
 
 import Foundation
 
 /// How scared the person feels. Words only, never a score on screen.
-enum Feeling: Int, CaseIterable, Codable, Identifiable {
+nonisolated enum Feeling: Int, CaseIterable, Codable, Identifiable, Sendable {
     case calm = 0, littleNervous, nervous, veryScared
 
     var id: Int { rawValue }

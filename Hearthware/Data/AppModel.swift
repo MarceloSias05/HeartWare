@@ -17,6 +17,7 @@ final class AppModel {
     private var context: ModelContext { container.mainContext }
     private(set) var profile: Profile?
     private(set) var records: [StepRecord] = []
+    private(set) var symptoms: [SymptomRecord] = []
 
     init(container: ModelContainer) {
         self.container = container
@@ -30,25 +31,47 @@ final class AppModel {
     var goal: Goal? { profile?.goal }
     var goalTitle: String? { profile?.goalTitle }
     var condition: HeartCondition? { profile?.condition }
+    var conditionTitle: String? { profile?.conditionTitle }
 
     var todayStep: StepIdea { Coach.nextStep(goal: goal, records: records) }
     var todayState: DayState { Coach.dayState(records: records) }
     var fearIsShrinking: Bool { Coach.fearIsShrinking(records: records) }
     func explanation(for record: StepRecord) -> String { Coach.explanation(for: record) }
 
+    /// What the Watch needs to run today's step on its own.
+    var watchToday: WatchToday? {
+        guard hasOnboarded else { return nil }
+        let step = todayStep
+        return WatchToday(name: name, title: step.title, hint: step.hint, bigStep: step.bigStep)
+    }
+
     // MARK: Intents
 
-    func completeOnboarding(name: String, goal: Goal, customGoal: String?, condition: HeartCondition) {
-        context.insert(Profile(name: name, goal: goal, customGoal: customGoal, condition: condition))
+    func completeOnboarding(name: String, goal: Goal, customGoal: String?, condition: HeartCondition,
+                            customCondition: String? = nil, baselineFear: Feeling? = nil) {
+        context.insert(Profile(name: name, goal: goal, customGoal: customGoal, condition: condition,
+                               customCondition: customCondition, baselineFear: baselineFear))
         save()
     }
 
     @discardableResult
-    func log(title: String, before: Feeling, after: Feeling) -> StepRecord {
-        let record = StepRecord(date: .now, title: title, before: before, after: after)
+    func log(title: String, before: Feeling, after: Feeling, watch: WatchResult? = nil,
+             noteBefore: String? = nil, noteAfter: String? = nil, date: Date = .now) -> StepRecord {
+        func clean(_ note: String?) -> String? {
+            let text = note?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return text.isEmpty ? nil : text
+        }
+        let record = StepRecord(date: date, title: title, before: before, after: after,
+                                peakHeartRate: watch?.peakHeartRate, recoverySeconds: watch?.recoverySeconds,
+                                noteBefore: clean(noteBefore), noteAfter: clean(noteAfter))
         context.insert(record)
         save()
         return record
+    }
+
+    func logSymptom(_ symptom: String, urgent: Bool, date: Date = .now) {
+        context.insert(SymptomRecord(date: date, symptom: symptom, urgent: urgent))
+        save()
     }
 
     // MARK: Storage
@@ -61,5 +84,6 @@ final class AppModel {
     private func reload() {
         profile = (try? context.fetch(FetchDescriptor<Profile>(sortBy: [SortDescriptor(\.createdAt)])))?.last
         records = (try? context.fetch(FetchDescriptor<StepRecord>(sortBy: [SortDescriptor(\.date)]))) ?? []
+        symptoms = (try? context.fetch(FetchDescriptor<SymptomRecord>(sortBy: [SortDescriptor(\.date)]))) ?? []
     }
 }

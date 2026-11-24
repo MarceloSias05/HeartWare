@@ -30,4 +30,5 @@ struct RootView: View {
 #Preview {
     RootView()
         .environment(AppModel(container: .empty))
+        .environment(WatchLink())
 }

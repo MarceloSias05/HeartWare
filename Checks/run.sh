@@ -3,5 +3,5 @@
 set -e
 cd "$(dirname "$0")/.."
 out=$(mktemp -d)
-xcrun swiftc -o "$out/check" Hearthware/Domain/*.swift Hearthware/Data/*.swift Checks/main.swift
+xcrun swiftc -o "$out/check" Hearthware/Domain/*.swift Hearthware/Data/*.swift Shared/*.swift Checks/main.swift
 "$out/check"

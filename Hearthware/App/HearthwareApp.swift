@@ -11,10 +11,11 @@ import SwiftData
 @main
 struct HearthwareApp: App {
     @State private var model: AppModel
+    @State private var watchLink = WatchLink()
 
     init() {
         // try! on purpose: without its store the app cannot do anything useful.
-        let container = try! ModelContainer(for: Profile.self, StepRecord.self)
+        let container = try! ModelContainer(for: Profile.self, StepRecord.self, SymptomRecord.self)
         _model = State(initialValue: AppModel(container: container))
     }
 
@@ -22,6 +23,9 @@ struct HearthwareApp: App {
         WindowGroup {
             RootView()
                 .environment(model)
+                .environment(watchLink)
+                .task { watchLink.activate(model: model) }
+                .onChange(of: model.watchToday, initial: true) { watchLink.share(today: model.watchToday) }
         }
     }
 }

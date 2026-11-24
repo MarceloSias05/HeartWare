@@ -14,7 +14,7 @@
 - el código actual (`StepFlowView`: "With you" stands in for the Apple Watch; `DoctorSummaryView` muestra "Not yet");
 - el Sketch de Heartware (9 pantallas de Watch, que no se leyeron para este plan).
 
-## Estado (actualizado 2026-11-23)
+## Estado (actualizado 2026-11-24)
 
 | Parte | Tarea | Estado |
 |---|---|---|
@@ -24,23 +24,52 @@
 | B | B1 Target de tests | ⏭️ Saltada: los chequeos corren con `Checks/run.sh` (21 chequeos, todos pasan) |
 | B | B2 SwiftData | ✅ Hecha: `6f1c805`, en `main` |
 | B | B3 Onboarding nombre + "Other" | ✅ Hecha: `6bc62bd`, en `main` (falta probarla a mano en el simulador) |
-| C | C1–C5 Apple Watch | 🔜 Siguiente |
+| C | C1 WatchResult + recuperación | ✅ Hecha: `ed7e629` (rama `feat/apple-watch`) |
+| C | C2 Target de watchOS | ✅ Hecha: target "HearthwareWatch Watch App" (Marcelo) + conexión (`ea05bcf`): HealthKit en los dos targets, textos de permiso, `workout-processing`, ícono. Los dos esquemas compilan |
+| C | C3 Sesión en el Watch | 🟡 Compila en el target. No se ha corrido: no hay runtime de simulador de watchOS en la Mac, y el pulso real solo se prueba en un Watch |
+| C | C4 iPhone ↔ Watch | 🟡 El lado del iPhone compila y tiene respaldo sin Watch (`9aca6cc`); falta probarlo con un Watch real |
+| C | C5 TestFlight build 2 | ❌ Pendiente |
+| C | C6 Datos de Apple Health en el resumen (pedido por Marcelo) | ✅ Hecha: `a137eec`. Corazón + movimiento/cansancio, "30 días antes de unirse" contra "últimos 7 días" con % de cambio; el preview del PDF quedó arreglado. Sin probar con datos reales de Salud |
+| C | C7 PDF con sentido (pedido por Marcelo) | ✅ Hecha: `18c616f` en `feat/pdf-summary`. At a glance, miedo y escalón, síntomas guardados (antes la ayuda no guardaba nada) con aviso de una hora después, fechas de cada columna, varias páginas |
+| C | C8 Gráficas en el PDF (Swift Charts) | ✅ Hecha: `1742520` en `feat/pdf-charts`. Página "Trends": miedo antes/después, pulso máximo por paso, y día por día de pasos, pulso en reposo, presión, HRV, velocidad al caminar y oxígeno, con línea del día en que se unió |
+| C | C9 Párrafo para el doctor con Foundation Models | ✅ Hecha en `feat/pdf-charts`. Apple Intelligence en el iPhone escribe 3–4 frases solo con los datos del PDF; si no está disponible, no hay párrafo. Agregar **FoundationModels** y **Swift Charts** a la lista de Frameworks de la entrega |
+| C | C10 Sentimiento con cara y slider (pedido por Marcelo) | ✅ Hecha en `feat/feeling-slider` (desde main). `FeelingPage`: cara que cambia de asustada a tranquila, fondo ámbar → menta, palabra grande, slider que se ajusta a 4 sentimientos, háptica y VoiceOver. Reemplaza la lista antes y después del paso |
+| C | C11 Colores por sentimiento y notas | ✅ Hecha. Naranja, amarillo, verde y menta; "Add note" antes y después del paso, las notas salen en el PDF |
+| C | C12 Onboarding: sentimiento inicial, condición sin preseleccionar, Apple Health | ✅ Hecha. 5 páginas; el sentimiento de hoy es el inicio de la tendencia de miedo; permiso de Salud explicado al final |
+| C | C13 Texto libre en "Something else" de la condición; página de Salud con scroll | ✅ Hecha. Sale en el PDF y en el párrafo |
+| C | C14 Ícono nuevo: "circuit heart" | ✅ Hecha. Corazón de pistas de circuito (hardware), pulso adentro (corazón) y pista ámbar que sube (longevidad). Light, dark, tinted y Watch; se regenera con `docs/app-icon.swift` |
+| C | C15 El párrafo de Apple Intelligence no puede inventar datos | ✅ Hecha. Inventó una edad (24) que la app nunca pide. Ahora: las instrucciones prohíben mencionar edad y sexo, y cada número del párrafo debe estar en los datos que recibió; si no, se genera otra vez y, si vuelve a fallar, el PDF sale sin párrafo |
+| C | C16 Datos del cuerpo desde Apple Health | ✅ Hecha. Encabezado del PDF: edad, sexo, altura, peso e IMC (calculado); tabla "Body" y gráfica de peso, con el cambio en kg (subir unos kilos puede ser retención de líquido). El párrafo menciona la edad solo si viene de Salud |
+| C | C17 Todo desde el Apple Watch (HIG) | ✅ Hecha en `feat/watch-everything`. Inicio con el paso de hoy; paso completo en el Watch: sentimiento antes y después con la Digital Crown (cara y color como en el iPhone, háptica por sentimiento), aviso del doctor en pasos grandes, pulso y recuperación, nota dictada. "Not feeling well" con 112 y Emergency SOS. Todo viaja al iPhone con `transferUserInfo` (en cola, no se pierde) y se guarda en SwiftData con su fecha. El iPhone le manda al Watch el paso de hoy |
 
 **Entregables hoy:**
 - **App Name:** sin decidir (Heartware / Hearthware).
-- **App Icon:** ✅ orbe teal en `Assets.xcassets/AppIcon.appiconset` (light, dark, tinted).
+- **App Icon:** ✅ "circuit heart" en `Assets.xcassets/AppIcon.appiconset` (light, dark, tinted) y en el Watch.
 - **App Statement:** borrador en A1, sin aprobar.
 - **App Summary Template:** ❌ falta llenarlo.
 - **Git:** https://github.com/MarceloSias05/Hearthware (privado).
 - **TestFlight:** ❌ falta.
-- **Frameworks hoy:** SwiftUI, Observation, SwiftData. Con la Parte C: + HealthKit, WatchConnectivity, WatchKit.
+- **Frameworks** (sacados de los `import` del código, 2026-11-24):
+  - **SwiftUI:** toda la interfaz, en iPhone y Watch.
+  - **Observation:** `AppModel` con `@Observable`.
+  - **SwiftData:** perfil, pasos (con notas) y síntomas, guardados en el teléfono.
+  - **HealthKit:** lee el historial de corazón y movimiento para el resumen; en el Watch, la sesión de ejercicio que mide el pulso del paso.
+  - **WatchConnectivity:** el iPhone le pasa el paso al Watch y recibe el resultado.
+  - **WatchKit:** la app del Watch.
+  - **Swift Charts:** las gráficas de la página "Trends" del PDF.
+  - **FoundationModels:** el párrafo para el doctor, escrito en el iPhone con Apple Intelligence.
+  - **UserNotifications:** el aviso de "How are you feeling now?" una hora después de reportar un síntoma.
+  - **Foundation:** base (fechas, formatos, texto).
 
 **Cambios respecto al plan original (decididos al implementar):**
 - `AppModel.init(container: ModelContainer)` en vez de `init(context:)`, y la clase es `@MainActor`: un `ModelContext` no retiene a su contenedor, así que `ModelContainer.empty.mainContext` tronaba en el primer fetch. Previews y chequeos usan `AppModel(container: .empty)`.
 - El resumen para el doctor y el PDF muestran también la meta ("Goal: <goalTitle>"), para que la meta escrita en "Other" sirva de algo.
 - El botón pill se ve atenuado cuando está deshabilitado.
 - Bundle ID actual: `com.marcelo.academy.Heartware`; team del target `N2TLVFPKL4`, pero el proyecto todavía dice `VWUWR4BNBX`. Hay que unificarlos antes de archivar.
-- Si la Parte C no llega a la entrega, cambiar "Start on Apple Watch" y "Your Watch taps your wrist…" en `StepFlowView.swift`: hoy prometen un Watch que no existe.
+- El texto ya no promete un Watch que no existe: sin Watch, el botón dice "Start your step" y `WithYouView` dice "Take it at your own pace".
+- El iPhone abre la app del Watch con `HKHealthStore.startWatchApp` y le pasa el paso por application context. Cada paso tiene un id, y se ignora cualquier resultado o cancelación de otro paso.
+- No hay "Slow down" automático: A1 sigue sin decidirse y el plan recomienda no avisar.
+- `WatchResult.swift` vive en `Shared/`, con membresía de carpeta en `project.xcproj`. `WatchLink` vive en `Hearthware/Services/`.
 
 ## Global Constraints
 
