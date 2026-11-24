@@ -24,7 +24,8 @@ struct HearthwareApp: App {
             RootView()
                 .environment(model)
                 .environment(watchLink)
-                .task { watchLink.activate() }
+                .task { watchLink.activate(model: model) }
+                .onChange(of: model.watchToday, initial: true) { watchLink.share(today: model.watchToday) }
         }
     }
 }

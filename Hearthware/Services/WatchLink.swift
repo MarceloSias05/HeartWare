@@ -3,7 +3,8 @@
 //  Hearthware
 //
 //  The iPhone side of the Watch: opens the Watch app for a step and hands back what
-//  it measured. Without a paired Watch with the app installed, `canUseWatch` is false
+//  it measured, tells the Watch today's step, and saves steps and symptoms reported
+//  on the Watch. Without a paired Watch with the app installed, `canUseWatch` is false
 //  and the step runs on the iPhone alone.
 //
 
@@ -20,8 +21,12 @@ final class WatchLink: NSObject {
 
     private var currentStep: String?
     private let healthStore = HKHealthStore()
+    private weak var model: AppModel?
+    /// The application context is one dictionary: today's step and a step start live in it together.
+    private var context: [String: Any] = [:]
 
-    func activate() {
+    func activate(model: AppModel) {
+        self.model = model
         guard WCSession.isSupported() else { return }
         WCSession.default.delegate = self
         WCSession.default.activate()
@@ -33,7 +38,8 @@ final class WatchLink: NSObject {
         guard canUseWatch else { return false }
         let step = UUID().uuidString
         do {
-            try WCSession.default.updateApplicationContext(WatchMessage.startContext(step: step, title: title))
+            context.merge(WatchMessage.startContext(step: step, title: title)) { $1 }
+            try WCSession.default.updateApplicationContext(context)
             let config = HKWorkoutConfiguration()
             config.activityType = .walking
             try await healthStore.startWatchApp(toHandle: config)
@@ -55,8 +61,29 @@ final class WatchLink: NSObject {
         }
     }
 
+    /// Keeps the Watch's "today" in sync. Nil before onboarding.
+    func share(today: WatchToday?) {
+        context[WatchMessage.today] = nil
+        if let today { context.merge(WatchMessage.todayContext(today)) { $1 } }
+        guard WCSession.default.activationState == .activated else { return }
+        try? WCSession.default.updateApplicationContext(context)
+    }
+
+    /// A step or symptom reported on the Watch. Kept with the Watch's own date.
+    private func receiveReport(_ message: [String: Any]) {
+        guard let model else { return }
+        if let log = WatchMessage.decode(WatchStepLog.self, kind: WatchMessage.stepLog, from: message) {
+            model.log(title: log.title, before: log.before, after: log.after, watch: log.result,
+                      noteBefore: log.noteBefore, noteAfter: log.noteAfter, date: log.date)
+        } else if let symptom = WatchMessage.decode(WatchSymptom.self, kind: WatchMessage.symptom, from: message) {
+            model.logSymptom(symptom.symptom, urgent: symptom.urgent, date: symptom.date)
+            if !symptom.urgent { Task { await CheckIn.schedule(after: symptom.symptom) } }
+        }
+    }
+
     private func refresh(_ session: WCSession) {
         canUseWatch = session.activationState == .activated && session.isPaired && session.isWatchAppInstalled
+        if let today = model?.watchToday { share(today: today) }
     }
 
     private func receive(step: String, result: WatchResult) {
@@ -84,12 +111,25 @@ extension WatchLink: WCSessionDelegate {
     }
 
     nonisolated func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
-        guard let (step, result) = WatchMessage.result(from: message) else { return }
-        Task { @MainActor in receive(step: step, result: result) }
+        handle(message)
     }
 
     nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any] = [:]) {
-        guard let (step, result) = WatchMessage.result(from: userInfo) else { return }
-        Task { @MainActor in receive(step: step, result: result) }
+        handle(userInfo)
+    }
+
+    private nonisolated func handle(_ message: [String: Any]) {
+        if let (step, result) = WatchMessage.result(from: message) {
+            Task { @MainActor in receive(step: step, result: result) }
+        } else {
+            // [String: Any] isn't Sendable: pass the raw bytes of what we need.
+            let kind = message[WatchMessage.kind] as? String, data = message[WatchMessage.data] as? Data
+            Task { @MainActor in
+                var copy: [String: Any] = [:]
+                copy[WatchMessage.kind] = kind
+                copy[WatchMessage.data] = data
+                receiveReport(copy)
+            }
+        }
     }
 }

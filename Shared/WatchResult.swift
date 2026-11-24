@@ -30,10 +30,56 @@ nonisolated enum Recovery {
     }
 }
 
+/// Who the person is and today's step, so the Watch can run a step on its own.
+nonisolated struct WatchToday: Codable, Equatable, Sendable {
+    var name: String
+    var title: String
+    var hint: String
+    var bigStep: Bool
+}
+
+/// A whole step done on the Watch: what the iPhone saves as a StepRecord.
+nonisolated struct WatchStepLog: Codable, Equatable, Sendable {
+    var date: Date
+    var title: String
+    var before: Feeling
+    var after: Feeling
+    var result: WatchResult
+    var noteBefore: String?
+    var noteAfter: String?
+}
+
+/// "Not feeling well", reported on the Watch.
+nonisolated struct WatchSymptom: Codable, Equatable, Sendable {
+    var date: Date
+    var symptom: String
+    var urgent: Bool
+}
+
 /// The few messages the iPhone and Watch exchange. Every step has an id so a late
 /// result from a cancelled step is never saved on the wrong step.
 nonisolated enum WatchMessage {
     static let kind = "kind", step = "step", title = "title", result = "result", cancel = "cancel"
+    static let today = "today", stepLog = "stepLog", symptom = "symptom", data = "data"
+
+    /// Watch → iPhone: a step or symptom reported on the Watch, queued with transferUserInfo.
+    static func payload<T: Encodable>(_ kind: String, _ value: T) -> [String: Any] {
+        [self.kind: kind, data: (try? JSONEncoder().encode(value)) ?? Data()]
+    }
+
+    static func decode<T: Decodable>(_ type: T.Type, kind: String, from message: [String: Any]) -> T? {
+        guard message[self.kind] as? String == kind, let data = message[data] as? Data else { return nil }
+        return try? JSONDecoder().decode(type, from: data)
+    }
+
+    /// iPhone → Watch, in the same application context as a step start (the context is one dictionary).
+    static func todayContext(_ today: WatchToday) -> [String: Any] {
+        [self.today: (try? JSONEncoder().encode(today)) ?? Data()]
+    }
+
+    static func today(from context: [String: Any]) -> WatchToday? {
+        (context[today] as? Data).flatMap { try? JSONDecoder().decode(WatchToday.self, from: $0) }
+    }
 
     /// iPhone → Watch, sent as application context before launching the Watch app.
     static func startContext(step: String, title: String) -> [String: Any] {

@@ -13,8 +13,8 @@ struct HelpView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var noted: String?
 
-    private let urgent = ["Chest pain or pressure", "Very short of breath"]
-    private let other = ["Dizzy", "More tired than usual", "Something else"]
+    private let urgent = SymptomList.urgent
+    private let other = SymptomList.other
 
     var body: some View {
         NavigationStack {

@@ -99,6 +99,10 @@ MainActor.assumeIsolated {
     let m = AppModel(container: .empty)
     let r = m.log(title: "Walk", before: .nervous, after: .calm, noteBefore: "  Knees shaking ", noteAfter: "   ")
     check(r.noteBefore == "Knees shaking" && r.noteAfter == nil, "notesTrimmedAndBlankIsNil")
+    let past = Date(timeIntervalSince1970: 1_000)
+    check(m.log(title: "From Watch", before: .calm, after: .calm, date: past).date == past, "logKeepsWatchDate")
+    m.logSymptom("Dizzy", urgent: false, date: past)
+    check(m.symptoms.first?.date == past, "symptomKeepsWatchDate")
 }
 
 // Trends for charts
@@ -146,6 +150,22 @@ let withBody = SummaryFacts.narrativePrompt(name: "Ana", condition: "Heart attac
 check(withBody.contains("52 years"), "promptHasBody")
 check(SummaryFacts.isGrounded("Ana is 52 years old.", in: withBody), "ageFromHealthIsGrounded")
 
+// Watch reports
+let wlog = WatchStepLog(date: Date(timeIntervalSince1970: 100), title: "Walk", before: .nervous, after: .calm,
+                        result: WatchResult(peakHeartRate: 120, recoverySeconds: 60), noteBefore: "Shaky", noteAfter: nil)
+check(WatchMessage.decode(WatchStepLog.self, kind: WatchMessage.stepLog,
+                          from: WatchMessage.payload(WatchMessage.stepLog, wlog)) == wlog, "stepLogRoundTrip")
+let wsym = WatchSymptom(date: Date(timeIntervalSince1970: 5), symptom: "Dizzy", urgent: false)
+check(WatchMessage.decode(WatchSymptom.self, kind: WatchMessage.symptom,
+                          from: WatchMessage.payload(WatchMessage.symptom, wsym)) == wsym, "symptomRoundTrip")
+check(WatchMessage.decode(WatchSymptom.self, kind: WatchMessage.symptom,
+                          from: WatchMessage.payload(WatchMessage.stepLog, wlog)) == nil, "wrongKindIsIgnored")
+let wtoday = WatchToday(name: "Ana", title: "Climb one floor, slowly", hint: "Stop whenever.", bigStep: false)
+var ctx = WatchMessage.startContext(step: "s1", title: "Walk")
+ctx.merge(WatchMessage.todayContext(wtoday)) { $1 }
+check(WatchMessage.today(from: ctx) == wtoday && WatchMessage.start(from: ctx)?.step == "s1", "todayAndStartShareContext")
+check(SymptomList.urgent.contains("Chest pain or pressure") && SymptomList.other.contains("Dizzy"), "symptomListShared")
+
 // AppModel + SwiftData
 MainActor.assumeIsolated {
     let m = AppModel(container: .empty)
@@ -155,6 +175,8 @@ MainActor.assumeIsolated {
     o.completeOnboarding(name: "Ana", goal: .market, customGoal: nil, condition: .surgery, baselineFear: .veryScared)
     check(o.hasOnboarded && o.name == "Ana" && o.condition == .surgery && o.goal == .market, "onboardingCreatesProfile")
     check(o.profile?.baselineFear == .veryScared, "onboardingSavesBaselineFear")
+    check(m.watchToday == nil, "noWatchTodayBeforeOnboarding")
+    check(o.watchToday == WatchToday(name: "Ana", title: o.todayStep.title, hint: o.todayStep.hint, bigStep: o.todayStep.bigStep), "watchTodayIsTodaysStep")
     let oc = AppModel(container: .empty)
     oc.completeOnboarding(name: "Ana", goal: .market, customGoal: nil, condition: .other, customCondition: "Myocarditis")
     check(oc.conditionTitle == "Myocarditis", "customConditionIsShown")

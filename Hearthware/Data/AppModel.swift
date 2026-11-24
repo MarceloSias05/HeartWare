@@ -38,6 +38,13 @@ final class AppModel {
     var fearIsShrinking: Bool { Coach.fearIsShrinking(records: records) }
     func explanation(for record: StepRecord) -> String { Coach.explanation(for: record) }
 
+    /// What the Watch needs to run today's step on its own.
+    var watchToday: WatchToday? {
+        guard hasOnboarded else { return nil }
+        let step = todayStep
+        return WatchToday(name: name, title: step.title, hint: step.hint, bigStep: step.bigStep)
+    }
+
     // MARK: Intents
 
     func completeOnboarding(name: String, goal: Goal, customGoal: String?, condition: HeartCondition,
@@ -49,12 +56,12 @@ final class AppModel {
 
     @discardableResult
     func log(title: String, before: Feeling, after: Feeling, watch: WatchResult? = nil,
-             noteBefore: String? = nil, noteAfter: String? = nil) -> StepRecord {
+             noteBefore: String? = nil, noteAfter: String? = nil, date: Date = .now) -> StepRecord {
         func clean(_ note: String?) -> String? {
             let text = note?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             return text.isEmpty ? nil : text
         }
-        let record = StepRecord(date: .now, title: title, before: before, after: after,
+        let record = StepRecord(date: date, title: title, before: before, after: after,
                                 peakHeartRate: watch?.peakHeartRate, recoverySeconds: watch?.recoverySeconds,
                                 noteBefore: clean(noteBefore), noteAfter: clean(noteAfter))
         context.insert(record)
@@ -62,8 +69,8 @@ final class AppModel {
         return record
     }
 
-    func logSymptom(_ symptom: String, urgent: Bool) {
-        context.insert(SymptomRecord(symptom: symptom, urgent: urgent))
+    func logSymptom(_ symptom: String, urgent: Bool, date: Date = .now) {
+        context.insert(SymptomRecord(date: date, symptom: symptom, urgent: urgent))
         save()
     }
 
