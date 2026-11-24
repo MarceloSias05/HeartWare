@@ -1,4 +1,4 @@
-# Hearthware
+# Heartware
 
 Getting back to your life after a heart problem, one small step at a time.
 
