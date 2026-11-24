@@ -16,7 +16,7 @@ enum CheckIn {
         guard (try? await center.requestAuthorization(options: [.alert, .sound])) == true else { return }
         let content = UNMutableNotificationContent()
         content.title = "How are you feeling now?"
-        content.body = "An hour ago you said: \(symptom.lowercased()). If it hasn't gone away, open Hearthware."
+        content.body = "An hour ago you said: \(symptom.lowercased()). If it hasn't gone away, open Heartware."
         content.sound = .default
         let request = UNNotificationRequest(identifier: "checkin-\(UUID().uuidString)", content: content,
                                             trigger: UNTimeIntervalNotificationTrigger(timeInterval: delay, repeats: false))

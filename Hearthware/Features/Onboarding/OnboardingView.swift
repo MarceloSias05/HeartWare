@@ -185,7 +185,7 @@ struct OnboardingView: View {
                 Text("Show your doctor how far you've come")
                     .font(.largeTitle.bold())
                     .padding(.top, 28)
-                Text("Hearthware reads your heart and walking history from Apple Health, including the weeks before today, so your doctor can see the before and after. You'll never see numbers here.")
+                Text("Heartware reads your heart and walking history from Apple Health, including the weeks before today, so your doctor can see the before and after. You'll never see numbers here.")
                     .foregroundStyle(Color.hwSecondary)
                     .padding(.top, 10)
                 Text("Read only. It stays on your phone until you share the summary.")

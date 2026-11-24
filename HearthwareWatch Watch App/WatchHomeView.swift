@@ -49,7 +49,7 @@ struct WatchHomeView: View {
                         .buttonStyle(.borderedProminent)
                         .tint(mint)
                     } else {
-                        Text("Open Hearthware on your iPhone to set up your first step.")
+                        Text("Open Heartware on your iPhone to set up your first step.")
                             .font(.headline)
                     }
                     NavigationLink {
@@ -62,7 +62,7 @@ struct WatchHomeView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .navigationTitle("Hearthware")
+            .navigationTitle("Heartware")
             .containerBackground(mint.gradient, for: .navigation)
         }
     }

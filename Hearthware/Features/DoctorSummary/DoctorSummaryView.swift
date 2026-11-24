@@ -75,7 +75,7 @@ struct DoctorSummaryView: View {
     }
 
     private func makePDF(_ pages: [DoctorPDFPage]) -> URL? {
-        let url = URL.temporaryDirectory.appending(path: "Hearthware summary.pdf")
+        let url = URL.temporaryDirectory.appending(path: "Heartware summary.pdf")
         var box = CGRect(x: 0, y: 0, width: DoctorPDFPage.width, height: DoctorPDFPage.height)
         guard let context = CGContext(url as CFURL, mediaBox: &box, nil) else { return nil }
         for page in pages {
@@ -201,7 +201,7 @@ struct DoctorPDFPage: View {
             if let body = summary.health?.body?.line {
                 Text(body).font(.system(size: 11, weight: .semibold))
             }
-            Text("Using Hearthware since \(day(summary.joined))  ·  Generated \(day(summary.generated))")
+            Text("Using Heartware since \(day(summary.joined))  ·  Generated \(day(summary.generated))")
                 .font(.system(size: 11)).foregroundStyle(grey)
             Divider()
         }
@@ -274,7 +274,7 @@ struct DoctorPDFPage: View {
         let columns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
         return VStack(alignment: .leading, spacing: 10) {
             Text("Trends").font(.system(size: 13, weight: .bold))
-            Text("Each chart runs from \(HealthReport.beforeDays) days before joining until today. The dashed line marks the day the patient joined Hearthware; amber bars are days before it.")
+            Text("Each chart runs from \(HealthReport.beforeDays) days before joining until today. The dashed line marks the day the patient joined Heartware; amber bars are days before it.")
                 .font(.system(size: 9)).foregroundStyle(grey)
                 .fixedSize(horizontal: false, vertical: true)
             if summary.hasFearTrend {

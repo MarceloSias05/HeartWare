@@ -3,7 +3,7 @@
 //  Hearthware
 //
 //  Reads the heart and walking history from Apple Health for the doctor summary:
-//  the 30 days before the person joined Hearthware against the last 7 days, so the
+//  the 30 days before the person joined Heartware against the last 7 days, so the
 //  doctor can see the change. Read-only. Anything not shared or not recorded is nil
 //  and the row is left out of the summary.
 //

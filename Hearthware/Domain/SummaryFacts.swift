@@ -69,7 +69,7 @@ enum SummaryFacts {
         var lines = [
             "Patient: \(name). Condition: \(condition). Personal goal: \(goal).",
             body.map { "From Apple Health: \($0)." } ?? "Age and sex: unknown.",
-            "Using Hearthware for \(daysInApp) days. \(stepsLogged) small exposure steps logged; now at step \(ladder.rung) of \(ladder.total) towards the goal.",
+            "Using Heartware for \(daysInApp) days. \(stepsLogged) small exposure steps logged; now at step \(ladder.rung) of \(ladder.total) towards the goal.",
         ]
         lines += facts.map { "- \($0)" }
         lines.append(symptoms.isEmpty ? "Symptoms reported: none." : "Symptoms reported:\n" + symptoms.map { "- \($0)" }.joined(separator: "\n"))
