@@ -4,7 +4,6 @@ Getting back to your life after a heart problem, one small step at a time.
 
 After a heart attack, heart surgery or a new diagnosis, everyday things like climbing the stairs, walking to the market or playing with the grandkids can feel frightening. Hearthware turns the goal the person wants back into a ladder of small steps. Before and after each step it asks how they feel, in words and never as a score. The patient never sees numbers. Their doctor gets them all in a PDF summary.
 
-Apple Developer Academy, challenge 2 (Health).
 
 ## What it does
 
