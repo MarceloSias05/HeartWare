@@ -13,31 +13,52 @@ struct StoryView: View {
 
     var body: some View {
         ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    fearCard
-                    if !model.records.isEmpty {
-                        Text("Moments you got back")
-                            .font(.title3.bold())
-                            .padding(.top, 8)
-                        VStack(spacing: 0) {
-                            ForEach(model.records.reversed()) { record in
-                                momentRow(record)
-                                if record.id != model.records.first?.id { Divider().padding(.leading, 44) }
-                            }
+            VStack(alignment: .leading, spacing: 16) {
+                fearCard
+                NavigationLink {
+                    DoctorSummaryView()
+                } label: {
+                    HStack(spacing: 16) {
+                        Image(systemName: "doc.text.fill")
+                            .font(.title2)
+                            .frame(width: 28)
+                            .accessibilityHidden(true)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Share with your doctor").font(.headline)
+                            Text("A summary with everything they need.")
+                                .font(.subheadline)
+                                .foregroundStyle(Color.hwSecondary)
+                        }
+                        Spacer(minLength: 8)
+                        Image(systemName: "chevron.right")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Color.hwSecondary)
+                            .accessibilityHidden(true)
+                    }
+                    .foregroundStyle(.primary)
+                    .multilineTextAlignment(.leading)
+                    .padding(16)
+                    .background(Color.hwCard, in: .rect(cornerRadius: Radius.card))
+                }
+                .buttonStyle(.card)
+                if !model.records.isEmpty {
+                    Text("Moments you got back")
+                        .font(.title3.bold())
+                        .accessibilityAddTraits(.isHeader)
+                        .padding(.top, 16)
+                    VStack(spacing: 0) {
+                        ForEach(model.records.reversed()) { record in
+                            momentRow(record)
+                            if record.id != model.records.first?.id { Divider().padding(.leading, 56) }
                         }
                     }
-                    NavigationLink {
-                        DoctorSummaryView()
-                    } label: {
-                        Label("Share with your doctor", systemImage: "doc.text")
-                    }
-                    .buttonStyle(.pillSecondary)
-                    .padding(.top, 8)
+                    .background(Color.hwCard, in: .rect(cornerRadius: Radius.card))
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 24)
             }
-            .navigationTitle("Your story")
+            .padding(.horizontal, Space.screen)
+            .padding(.bottom, 24)
+        }
+        .navigationTitle("Your story")
     }
 
     private var fearCard: some View {
@@ -75,22 +96,36 @@ struct StoryView: View {
         return "Working towards: \(goal). \(fear)"
     }
 
+    /// The feeling before and after as two colour dots, always next to the words.
     private func momentRow(_ record: StepRecord) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.title3)
-                .foregroundStyle(.primary)
-                .accessibilityHidden(true)
+        HStack(alignment: .top, spacing: 16) {
+            HStack(spacing: -6) {
+                feelingDot(record.before)
+                feelingDot(record.after)
+            }
+            .frame(width: 24)
+            .padding(.top, 4)
+            .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
-                Text(record.title)
+                Text(record.title).font(.headline)
                 Text("\(record.before.title) before, \(record.after.title.lowercased()) after")
                     .font(.subheadline)
                     .foregroundStyle(Color.hwSecondary)
+                Text(record.date, format: .dateTime.weekday(.wide).day().month(.wide))
+                    .font(.footnote)
+                    .foregroundStyle(Color.hwSecondary)
             }
-            Spacer()
+            Spacer(minLength: 0)
         }
-        .padding(.vertical, 12)
+        .padding(16)
         .accessibilityElement(children: .combine)
+    }
+
+    private func feelingDot(_ feeling: Feeling) -> some View {
+        Circle()
+            .fill(FeelingPalette.color(at: Double(Feeling.veryScared.rawValue - feeling.rawValue)))
+            .stroke(Color.hwCard, lineWidth: 2)
+            .frame(width: 16, height: 16)
     }
 }
 
