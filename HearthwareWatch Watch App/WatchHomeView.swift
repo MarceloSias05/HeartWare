@@ -49,7 +49,7 @@ struct WatchHomeView: View {
                         .buttonStyle(.borderedProminent)
                         .tint(mint)
                     } else {
-                        Text("Open Hearthware on your iPhone to set up your first step.")
+                        Text("Open Steady on your iPhone to set up your first step.")
                             .font(.headline)
                     }
                     NavigationLink {
@@ -62,7 +62,7 @@ struct WatchHomeView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .navigationTitle("Hearthware")
+            .navigationTitle("Steady")
             .containerBackground(mint.gradient, for: .navigation)
         }
     }
@@ -134,7 +134,7 @@ struct WatchStepFlowView: View {
         store.localStep = id
         store.localResult = nil
         phase = .moving
-        Task { await workout.start(step: id, title: today.title) }
+        Task { await workout.start(step: id, title: today.title, limit: today.heartRateLimit) }
     }
 
     private func finish() {
