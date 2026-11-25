@@ -2,14 +2,17 @@
 //  QuestionPage.swift
 //  Hearthware
 //
-//  One question with choices and a pill button. Used by onboarding and the step flow.
+//  One question with choices and a pill button. Used by onboarding and the doctor's limit.
 //
 
 import SwiftUI
 
 /// Shared layout for a single question with choices.
 struct QuestionPage<Choices: View>: View {
-    let step: String
+    /// Onboarding page number out of 5, shown as bars.
+    var progress: Int? = nil
+    /// A short eyebrow above the title, when there is no progress.
+    var step: String? = nil
     let title: String
     let subtitle: String
     let footnote: String?
@@ -21,17 +24,23 @@ struct QuestionPage<Choices: View>: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                Text(step)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.hwSecondary)
+                if let progress {
+                    StepProgress(current: progress, total: 5)
+                        .padding(.bottom, 16)
+                } else if let step {
+                    Text(step)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.hwSecondary)
+                        .padding(.bottom, 4)
+                }
                 Text(title)
                     .font(.largeTitle.bold())
-                    .padding(.top, 4)
+                    .accessibilityAddTraits(.isHeader)
                 Text(subtitle)
                     .foregroundStyle(Color.hwSecondary)
                     .padding(.top, 8)
                 VStack(spacing: 8) { choices }
-                    .padding(.top, 28)
+                    .padding(.top, 24)
                 if let footnote {
                     Text(footnote)
                         .font(.subheadline)
@@ -39,14 +48,17 @@ struct QuestionPage<Choices: View>: View {
                         .padding(.top, 16)
                 }
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, Space.screen)
+            .padding(.bottom, 16)
         }
+        .scrollDismissesKeyboard(.interactively)
         .safeAreaInset(edge: .bottom) {
             Button(buttonTitle, action: action)
                 .buttonStyle(.pill)
                 .disabled(buttonDisabled)
-                .padding(.horizontal, 20)
+                .padding(.horizontal, Space.screen)
                 .padding(.bottom, 8)
+                .background(Color(uiColor: .systemBackground))
         }
     }
 }

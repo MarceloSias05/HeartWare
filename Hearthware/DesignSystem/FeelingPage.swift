@@ -10,7 +10,9 @@
 import SwiftUI
 
 struct FeelingPage: View {
-    let eyebrow: String
+    /// Onboarding page out of 5, shown as bars instead of the eyebrow.
+    var progress: Int? = nil
+    let eyebrow: String?
     let question: String
     var footnote: String? = nil
     let buttonTitle: String
@@ -22,9 +24,11 @@ struct FeelingPage: View {
     /// 0 = very scared … 3 = calm. Continuous while dragging, snaps to a feeling on release.
     @State private var level: Double
     @State private var writingNote = false
+    @Environment(\.dynamicTypeSize) private var typeSize
 
-    init(eyebrow: String, question: String, footnote: String? = nil, buttonTitle: String,
+    init(progress: Int? = nil, eyebrow: String?, question: String, footnote: String? = nil, buttonTitle: String,
          feeling: Binding<Feeling>, note: Binding<String>? = nil, action: @escaping () -> Void) {
+        self.progress = progress
         self.eyebrow = eyebrow
         self.question = question
         self.footnote = footnote
@@ -37,17 +41,47 @@ struct FeelingPage: View {
 
     private var background: Color { FeelingPalette.color(at: level) }
     /// Same hue, darker: the big word and the soft buttons sit tone-on-tone on the background.
-    private var shade: Color { background.mix(with: .black, by: 0.32) }
+    private var shade: Color { background.mix(with: .black, by: 0.45) }
     private static let ink = Color(white: 0.12)
 
     var body: some View {
+        // Fills the screen when it fits; scrolls at large text sizes instead of truncating.
+        ViewThatFits(in: .vertical) {
+            content
+            ScrollView { content }
+        }
+        .safeAreaInset(edge: .bottom) { buttons }
+        .padding(.horizontal, 24)
+        .padding(.bottom, 8)
+        .foregroundStyle(Self.ink)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background { background.ignoresSafeArea() }
+        // Always bright with dark ink, in light and dark mode.
+        .environment(\.colorScheme, .light)
+        .onChange(of: level) {
+            let snapped = Feeling(rawValue: Feeling.veryScared.rawValue - Int(level.rounded())) ?? feeling
+            if snapped != feeling { feeling = snapped }
+        }
+        .sensoryFeedback(.selection, trigger: feeling)
+        .animation(.easeOut(duration: 0.15), value: feeling)
+        .sheet(isPresented: $writingNote) {
+            if let note { NoteSheet(question: question, note: note) }
+        }
+    }
+
+    private var content: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 6) {
-                Text(eyebrow)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Self.ink.opacity(0.6))
+            VStack(spacing: 8) {
+                if let progress {
+                    StepProgress(current: progress, total: 5)
+                } else if let eyebrow {
+                    Text(eyebrow)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Self.ink.opacity(0.7))
+                }
                 Text(question)
                     .font(.title2.bold())
+                    .accessibilityAddTraits(.isHeader)
             }
             .multilineTextAlignment(.center)
             .padding(.top, 8)
@@ -69,10 +103,6 @@ struct FeelingPage: View {
 
             Slider(value: $level, in: 0...3) {
                 Text(question)
-            } minimumValueLabel: {
-                Text("Very scared").font(.caption.weight(.medium))
-            } maximumValueLabel: {
-                Text("Calm").font(.caption.weight(.medium))
             } onEditingChanged: { editing in
                 if !editing { withAnimation(.spring(duration: 0.35)) { level = level.rounded() } }
             }
@@ -86,6 +116,14 @@ struct FeelingPage: View {
                 }
             }
             .padding(.top, 20)
+            // Ends of the slider under it, so they never truncate at large text.
+            HStack {
+                Text("Very scared")
+                Spacer(minLength: 16)
+                Text("Calm")
+            }
+            .font(.caption.weight(.medium))
+            .accessibilityHidden(true)
 
             Group {
                 if let text = note?.wrappedValue, !text.isEmpty {
@@ -100,38 +138,31 @@ struct FeelingPage: View {
             .padding(.top, 16)
 
             Spacer(minLength: 24)
-            HStack(spacing: 10) {
-                if let note {
-                    Button { writingNote = true } label: {
-                        Label(note.wrappedValue.isEmpty ? "Add note" : "Edit note", systemImage: "square.and.pencil")
-                            .font(.headline)
-                            .padding(.horizontal, 20)
-                            .frame(height: 56)
-                            .background(shade.opacity(0.22), in: .capsule)
-                    }
-                    .buttonStyle(.plain)
-                    .fixedSize()
+        }
+    }
+
+    /// Side by side; stacked at accessibility sizes so the main button keeps its width.
+    private var buttons: some View {
+        let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: 8)) : AnyLayout(HStackLayout(spacing: 8))
+        return layout {
+            if let note {
+                Button { writingNote = true } label: {
+                    Label(note.wrappedValue.isEmpty ? "Add note" : "Edit note", systemImage: "square.and.pencil")
+                        .font(.headline)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+                        .frame(minHeight: 56)
+                        .frame(maxWidth: typeSize.isAccessibilitySize ? .infinity : nil)
+                        .background(shade.opacity(0.22), in: .rect(cornerRadius: Radius.pill))
                 }
-                Button(buttonTitle, action: action)
-                    .buttonStyle(.pill)
+                .buttonStyle(.card)
+                .fixedSize(horizontal: !typeSize.isAccessibilitySize, vertical: false)
             }
+            Button(buttonTitle, action: action)
+                .buttonStyle(.pill)
         }
-        .padding(.horizontal, 24)
-        .padding(.bottom, 8)
-        .foregroundStyle(Self.ink)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background { background.ignoresSafeArea() }
-        // Always bright with dark ink, in light and dark mode.
-        .environment(\.colorScheme, .light)
-        .onChange(of: level) {
-            let snapped = Feeling(rawValue: Feeling.veryScared.rawValue - Int(level.rounded())) ?? feeling
-            if snapped != feeling { feeling = snapped }
-        }
-        .sensoryFeedback(.selection, trigger: feeling)
-        .animation(.easeOut(duration: 0.15), value: feeling)
-        .sheet(isPresented: $writingNote) {
-            if let note { NoteSheet(question: question, note: note) }
-        }
+        .padding(.top, 8)
+        .background(background)
     }
 }
 
@@ -150,8 +181,8 @@ private struct NoteSheet: View {
                 TextField("For example: my knees were shaking", text: $note, axis: .vertical)
                     .lineLimit(3...6)
                     .focused($focused)
-                    .padding(14)
-                    .background(Color.hwCard, in: .rect(cornerRadius: 14))
+                    .padding(16)
+                    .background(Color.hwCard, in: .rect(cornerRadius: Radius.textBox))
                 Spacer()
             }
             .padding(20)
