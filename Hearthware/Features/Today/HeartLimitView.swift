@@ -3,7 +3,7 @@
 //  Hearthware
 //
 //  The heart rate limit the doctor gave. The only number the person types; the Watch
-//  turns it into "Slow down a little" and never shows it back.
+//  turns it into "Slow down a little" and never shows it back. Opens as a sheet.
 //
 
 import SwiftUI
@@ -29,16 +29,17 @@ struct HeartLimitView: View {
             },
             buttonDisabled: limit != nil && !isValid
         ) {
-            HStack {
-                TextField("For example: 120", value: $limit, format: .number)
-                    .keyboardType(.numberPad)
-                    .focused($focused)
-                Text("beats per minute")
-                    .foregroundStyle(Color.hwSecondary)
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    field
+                    unit
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    field
+                    unit
+                }
             }
-            .padding(.horizontal, 20)
-            .frame(minHeight: 52)
-            .background(Color.hwCard, in: .capsule)
+            .capsuleField()
             if model.heartRateLimit != nil {
                 Button("Remove the limit") {
                     model.setHeartRateLimit(nil)
@@ -47,10 +48,28 @@ struct HeartLimitView: View {
                 .buttonStyle(.pillSecondary)
             }
         }
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel", systemImage: "xmark") { dismiss() }
+            }
+        }
         .onAppear {
             limit = model.heartRateLimit
             focused = true
         }
+    }
+
+    private var field: some View {
+        TextField("For example: 120", value: $limit, format: .number)
+            .keyboardType(.numberPad)
+            .focused($focused)
+            .font(.title3.weight(.semibold))
+            .monospacedDigit()
+    }
+
+    private var unit: some View {
+        Text("beats per minute")
+            .foregroundStyle(Color.hwSecondary)
     }
 }
 

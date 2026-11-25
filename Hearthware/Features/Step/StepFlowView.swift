@@ -14,16 +14,24 @@ struct StepFlowView: View {
     @Environment(AppModel.self) private var model
     @Environment(WatchLink.self) private var watchLink
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     enum Phase { case before, askDoctor, onWatch, withYou, after, result }
 
-    @State private var phase: Phase = .before
+    @State private var phase: Phase
     @State private var before: Feeling = .nervous
     @State private var after: Feeling = .calm
     @State private var noteBefore = ""
     @State private var noteAfter = ""
     @State private var record: StepRecord?
     @State private var watchResult: WatchResult?
+    @State private var showingBreath = false
+
+    /// `start` opens on a later phase, for previews.
+    init(idea: StepIdea, start: Phase = .before) {
+        self.idea = idea
+        _phase = State(initialValue: start)
+    }
 
     var body: some View {
         NavigationStack {
@@ -37,11 +45,19 @@ struct StepFlowView: View {
                 case .result: resultView
                 }
             }
-            .animation(.default, value: phase)
+            // A calm crossfade between moments of the step; a touch of scale unless Reduce Motion is on.
+            .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.98)))
+            .animation(.smooth(duration: 0.35), value: phase)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     if phase != .result {
                         Button("Close", systemImage: "xmark") { dismiss() }
+                    }
+                }
+                // Optional, never forced: a minute of breathing before starting.
+                ToolbarItem(placement: .topBarTrailing) {
+                    if phase == .before {
+                        Button("Breathe first") { showingBreath = true }
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -53,6 +69,7 @@ struct StepFlowView: View {
             }
         }
         .interactiveDismissDisabled(phase == .withYou || phase == .onWatch)
+        .sheet(isPresented: $showingBreath) { BreathingView() }
         .onAppear {
             watchLink.onResult = { result in
                 watchResult = result
@@ -88,15 +105,18 @@ struct StepFlowView: View {
 
     private var askDoctorView: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Container {
-                VStack(spacing: 12) {
-                    OrbView(calm: false, size: 110)
-                        .padding(.vertical, 20)
-                    Text("A big step").font(.title2.bold())
-                    Text(idea.title).foregroundStyle(Color.hwSecondary)
-                }
-                .frame(maxWidth: .infinity)
+            // How they said they feel about it, on its colour, with the words.
+            VStack(spacing: 8) {
+                FeelingFaceBadge(feeling: before)
+                Text("A big step").font(.title2.bold())
+                Text(idea.title)
             }
+            .multilineTextAlignment(.center)
+            .foregroundStyle(Color(white: 0.12))
+            .frame(maxWidth: .infinity)
+            .padding(Space.card)
+            .background(FeelingFaceBadge.color(before), in: .rect(cornerRadius: Radius.card))
+            .accessibilityElement(children: .combine)
             Text("Ask your\ndoctor first")
                 .font(.largeTitle.bold())
                 .padding(.top, 28)
@@ -139,51 +159,113 @@ struct StepFlowView: View {
             VStack(alignment: .leading, spacing: 0) {
                 Text(after.rawValue < before.rawValue ? "You did it" : "You showed up")
                     .font(.largeTitle.bold())
-                Container {
-                    VStack(spacing: 16) {
-                        OrbView(calm: after.rawValue <= Feeling.littleNervous.rawValue, size: 92)
-                            .padding(.vertical, 16)
-                        HStack(alignment: .firstTextBaseline) {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Before").font(.subheadline).foregroundStyle(Color.hwSecondary)
-                                Text(before.title).font(.title3.bold())
-                            }
-                            Spacer()
-                            Image(systemName: "arrow.right").foregroundStyle(Color.hwSecondary).accessibilityHidden(true)
-                            Spacer()
-                            VStack(alignment: .trailing, spacing: 2) {
-                                Text("After").font(.subheadline).foregroundStyle(Color.hwSecondary)
-                                Text(after.title).font(.title3.bold())
-                            }
-                        }
-                    }
-                }
-                .accessibilityElement(children: .combine)
-                .padding(.top, 20)
+                    .accessibilityAddTraits(.isHeader)
+                ChangeCard(before: before, after: after)
+                    .padding(.top, 20)
 
-                Text("What your heart did")
-                    .font(.title3.bold())
-                    .padding(.top, 28)
                 if let record {
-                    Text(model.explanation(for: record))
-                        .foregroundStyle(Color.hwSecondary)
-                        .padding(.top, 8)
+                    section("What your heart did", model.explanation(for: record))
                 }
-                Text("Next time")
-                    .font(.title3.bold())
-                    .padding(.top, 24)
-                Text(model.todayStep.title)
-                    .foregroundStyle(Color.hwSecondary)
-                    .padding(.top, 8)
+                section("Next time", model.todayStep.title)
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, Space.screen)
+            .padding(.bottom, 16)
         }
+        .sensoryFeedback(.success, trigger: phase) { _, now in now == .result }
         .safeAreaInset(edge: .bottom) {
             Button("Save to my story") { dismiss() }
                 .buttonStyle(.pill)
-                .padding(.horizontal, 20)
+                .padding(.horizontal, Space.screen)
                 .padding(.bottom, 8)
+                .background(Color(uiColor: .systemBackground))
         }
+    }
+
+    private func section(_ title: String, _ text: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title).font(.title3.bold())
+            Text(text).foregroundStyle(Color.hwSecondary)
+        }
+        .padding(.top, 24)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// Before and after as one face that changes from one feeling to the other, on the "after" colour.
+/// Colour never works alone: both feelings are also written underneath.
+struct ChangeCard: View {
+    let before: Feeling
+    let after: Feeling
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @State private var shown: Feeling
+
+    init(before: Feeling, after: Feeling) {
+        self.before = before
+        self.after = after
+        _shown = State(initialValue: before)
+    }
+
+    private func level(_ f: Feeling) -> Double { Double(Feeling.veryScared.rawValue - f.rawValue) }
+    private static let ink = Color(white: 0.12)
+
+    private func word(_ label: String, _ feeling: Feeling) -> some View {
+        VStack(alignment: label == "After" && !typeSize.isAccessibilitySize ? .trailing : .leading, spacing: 2) {
+            Text(label).font(.subheadline.weight(.semibold)).opacity(0.7)
+            Text(feeling.title).font(.title3.bold())
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 20) {
+            FeelingFace(calmness: level(shown) / 3)
+                .scaleEffect(0.6)
+                .frame(width: 140, height: 96)
+                .padding(.top, 12)
+            // Side by side; one under the other at accessibility sizes so words don't break.
+            if typeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 12) {
+                    word("Before", before)
+                    word("After", after)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                HStack(alignment: .firstTextBaseline) {
+                    word("Before", before)
+                    Spacer(minLength: 8)
+                    Image(systemName: "arrow.right").fontWeight(.semibold).accessibilityHidden(true)
+                    Spacer(minLength: 8)
+                    word("After", after).multilineTextAlignment(.trailing)
+                }
+            }
+        }
+        .foregroundStyle(Self.ink)
+        .padding(Space.card)
+        .frame(maxWidth: .infinity)
+        .background(FeelingPalette.color(at: level(shown)), in: .rect(cornerRadius: Radius.card))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Before: \(before.title). After: \(after.title).")
+        .task {
+            // The face starts as it was before the step and settles into how it feels now.
+            guard shown != after else { return }
+            try? await Task.sleep(for: .seconds(reduceMotion ? 0 : 0.5))
+            withAnimation(reduceMotion ? nil : .spring(duration: 0.9, bounce: 0)) { shown = after }
+        }
+    }
+}
+
+/// The feeling face, sized for a card. Its background colour comes from `color(_:)`.
+struct FeelingFaceBadge: View {
+    let feeling: Feeling
+    static func level(_ f: Feeling) -> Double { Double(Feeling.veryScared.rawValue - f.rawValue) }
+    static func color(_ f: Feeling) -> Color { FeelingPalette.color(at: level(f)) }
+
+    var body: some View {
+        FeelingFace(calmness: Self.level(feeling) / 3)
+            .scaleEffect(0.5)
+            .frame(width: 120, height: 84)
+            .padding(.vertical, 8)
+            .accessibilityHidden(true)
     }
 }
 
@@ -194,10 +276,13 @@ struct OnWatchView: View {
     var body: some View {
         VStack(spacing: 16) {
             Spacer()
-            OrbView(calm: true, size: 180)
+            // Still on purpose: the step is on the wrist, nothing to do here.
+            Image(systemName: "applewatch")
+                .font(.system(size: 96, weight: .light))
+                .foregroundStyle(Color.hwSecondary)
+                .accessibilityHidden(true)
             Text("Follow your Watch")
                 .font(.title.bold())
-                .padding(.top, 24)
             Text("It keeps you company while you move. Tap End step on your wrist when you're done.")
                 .foregroundStyle(Color.hwSecondary)
                 .multilineTextAlignment(.center)
@@ -218,7 +303,10 @@ struct WithYouView: View {
     var body: some View {
         VStack(spacing: 16) {
             Spacer()
-            OrbView(calm: true, size: 180, pulses: true)
+            Image(systemName: "figure.walk")
+                .font(.system(size: 96, weight: .light))
+                .foregroundStyle(Color.hwSecondary)
+                .accessibilityHidden(true)
             Text("You're doing well")
                 .font(.title.bold())
                 .padding(.top, 24)
