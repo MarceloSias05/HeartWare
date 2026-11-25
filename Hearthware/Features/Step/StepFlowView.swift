@@ -214,23 +214,18 @@ struct OnWatchView: View {
 /// The step on the iPhone alone, when there is no Watch to run it.
 struct WithYouView: View {
     let onEnd: () -> Void
-    @State private var slowDown = false
 
     var body: some View {
         VStack(spacing: 16) {
             Spacer()
-            OrbView(calm: !slowDown, size: 180, pulses: true)
-            Text(slowDown ? "Slow down a little" : "You're doing well")
+            OrbView(calm: true, size: 180, pulses: true)
+            Text("You're doing well")
                 .font(.title.bold())
                 .padding(.top, 24)
-            Text(slowDown ? "Rest on the landing. Take a breath." : "Take it at your own pace. Stop anytime.")
+            Text("Take it at your own pace. Stop anytime.")
                 .foregroundStyle(Color.hwSecondary)
                 .multilineTextAlignment(.center)
             Spacer()
-            #if DEBUG
-            Button(slowDown ? "Demo: back to calm" : "Demo: slow down") { slowDown.toggle() }
-                .font(.subheadline)
-            #endif
             Button("End step", action: onEnd)
                 .buttonStyle(.pill)
         }

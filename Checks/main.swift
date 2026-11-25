@@ -164,6 +164,10 @@ let wtoday = WatchToday(name: "Ana", title: "Climb one floor, slowly", hint: "St
 var ctx = WatchMessage.startContext(step: "s1", title: "Walk")
 ctx.merge(WatchMessage.todayContext(wtoday)) { $1 }
 check(WatchMessage.today(from: ctx) == wtoday && WatchMessage.start(from: ctx)?.step == "s1", "todayAndStartShareContext")
+check(!HeartLimit.isOver(bpm: 200, limit: nil, wasOver: false), "noLimitNeverOver")
+check(HeartLimit.isOver(bpm: 121, limit: 120, wasOver: false) && !HeartLimit.isOver(bpm: 120, limit: 120, wasOver: false), "overOnlyPastLimit")
+check(HeartLimit.isOver(bpm: 117, limit: 120, wasOver: true) && !HeartLimit.isOver(bpm: 115, limit: 120, wasOver: true), "staysOverUntilMarginBelow")
+check(WatchMessage.today(from: WatchMessage.todayContext(WatchToday(name: "A", title: "t", hint: "h", bigStep: false, heartRateLimit: 120)))?.heartRateLimit == 120, "limitReachesWatch")
 check(SymptomList.urgent.contains("Chest pain or pressure") && SymptomList.other.contains("Dizzy"), "symptomListShared")
 
 // AppModel + SwiftData
@@ -180,6 +184,10 @@ MainActor.assumeIsolated {
     let oc = AppModel(container: .empty)
     oc.completeOnboarding(name: "Ana", goal: .market, customGoal: nil, condition: .other, customCondition: "Myocarditis")
     check(oc.conditionTitle == "Myocarditis", "customConditionIsShown")
+    o.setHeartRateLimit(120)
+    check(o.heartRateLimit == 120 && o.watchToday?.heartRateLimit == 120, "limitIsSavedAndShared")
+    o.setHeartRateLimit(12)
+    check(o.heartRateLimit == nil, "typoLimitIsRemoved")
     check(o.conditionTitle == "Heart surgery", "listedConditionTitle")
 
     let c = ModelContainer.empty

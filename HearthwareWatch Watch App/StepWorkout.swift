@@ -19,6 +19,8 @@ final class StepWorkout: NSObject {
 
     private(set) var phase: Phase = .idle
     private(set) var title = ""
+    /// Past the doctor's limit right now. Always false without a limit.
+    private(set) var overLimit = false
     /// Called once per finished step with its id and what was measured.
     var onFinish: ((_ step: String, _ result: WatchResult) -> Void)?
 
@@ -26,14 +28,16 @@ final class StepWorkout: NSObject {
     private var session: HKWorkoutSession?
     private var builder: HKLiveWorkoutBuilder?
     private var step: String?
+    private var limit: Int?
     private var samples: [(date: Date, bpm: Double)] = []
     private var endedAt: Date?
     private var timers: [Task<Void, Never>] = []
 
-    func start(step: String, title: String) async {
+    func start(step: String, title: String, limit: Int?) async {
         guard phase == .idle else { return }
         self.step = step
         self.title = title
+        self.limit = limit
         samples = []
         endedAt = nil
         phase = .moving
@@ -51,6 +55,7 @@ final class StepWorkout: NSObject {
         guard phase == .moving else { return }
         endedAt = .now
         phase = .resting
+        overLimit = false
         stopTimers()
         WKInterfaceDevice.current().play(.success)
         timers.append(Task {
@@ -128,11 +133,17 @@ final class StepWorkout: NSObject {
         session = nil
         builder = nil
         step = nil
+        limit = nil
+        overLimit = false
         phase = .idle
     }
 
     fileprivate func add(bpm: Double, at date: Date) {
         samples.append((date, bpm))
+        guard phase == .moving else { return }
+        let over = HeartLimit.isOver(bpm: bpm, limit: limit, wasOver: overLimit)
+        if over && !overLimit { WKInterfaceDevice.current().play(.notification) }
+        overLimit = over
     }
 }
 

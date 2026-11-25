@@ -20,6 +20,8 @@ final class Profile {
     var createdAt: Date
     /// How they felt about the goal when they joined. Nil for profiles made before this was asked.
     var baselineFear: Feeling?
+    /// Beats per minute the doctor said not to pass. Nil when they gave none.
+    var heartRateLimit: Int?
 
     init(name: String, goal: Goal, customGoal: String?, condition: HeartCondition, customCondition: String? = nil,
          baselineFear: Feeling? = nil,

@@ -20,8 +20,10 @@ struct WatchStepView: View {
                     .font(.headline)
                     .multilineTextAlignment(.center)
             case .moving:
-                Text("You're doing well").font(.headline)
-                Text("Stop anytime.").font(.footnote).foregroundStyle(.secondary)
+                // Words only: the limit's number stays out of the wrist.
+                Text(workout.overLimit ? "Slow down a little" : "You're doing well").font(.headline)
+                Text(workout.overLimit ? "Rest a moment. Take a breath." : "Stop anytime.")
+                    .font(.footnote).foregroundStyle(.secondary)
                 Button("End step") { workout.endStep() }
                     .tint(Color(red: 0, green: 0.76, blue: 0.66))
             case .resting:

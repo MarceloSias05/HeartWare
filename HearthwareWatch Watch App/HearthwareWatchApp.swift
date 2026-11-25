@@ -39,7 +39,7 @@ final class WatchAppDelegate: NSObject, WKApplicationDelegate {
         Task {
             // The title arrives as application context just before the launch.
             guard let (step, title) = phone.pendingStep() else { return }
-            await workout.start(step: step, title: title)
+            await workout.start(step: step, title: title, limit: store.today?.heartRateLimit)
         }
     }
 }

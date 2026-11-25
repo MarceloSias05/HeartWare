@@ -34,6 +34,12 @@ struct TodayView: View {
                         storyCard
                     }
                     .buttonStyle(.plain)
+                    NavigationLink {
+                        HeartLimitView()
+                    } label: {
+                        limitCard
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
@@ -89,6 +95,26 @@ struct TodayView: View {
             .padding(.bottom, 8)
         }
         .accessibilityElement(children: .combine)
+    }
+
+    /// No number here: the limit itself only shows where it is typed.
+    private var limitCard: some View {
+        Container {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Label("Your doctor's limit", systemImage: "heart.circle")
+                        .font(.headline)
+                    Text(model.heartRateLimit == nil ? "Add the heart rate limit your doctor gave you." : "Your Watch tells you when to slow down.")
+                        .font(.subheadline)
+                        .foregroundStyle(Color.hwSecondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Color.hwSecondary)
+                    .accessibilityHidden(true)
+            }
+        }
     }
 
     private var storyCard: some View {

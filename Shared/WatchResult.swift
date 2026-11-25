@@ -30,12 +30,26 @@ nonisolated enum Recovery {
     }
 }
 
+/// A heart rate limit the person's doctor gave them. The Watch says "slow down" past it.
+nonisolated enum HeartLimit {
+    /// What the person can type: anything outside is a typo, not a limit.
+    static let range = 60...220
+    /// Back to "doing well" only this many bpm under the limit, so the Watch doesn't buzz on every beat around it.
+    static let margin: Double = 5
+
+    static func isOver(bpm: Double, limit: Int?, wasOver: Bool) -> Bool {
+        guard let limit else { return false }
+        return bpm > Double(limit) - (wasOver ? margin : 0)
+    }
+}
+
 /// Who the person is and today's step, so the Watch can run a step on its own.
 nonisolated struct WatchToday: Codable, Equatable, Sendable {
     var name: String
     var title: String
     var hint: String
     var bigStep: Bool
+    var heartRateLimit: Int? = nil
 }
 
 /// A whole step done on the Watch: what the iPhone saves as a StepRecord.

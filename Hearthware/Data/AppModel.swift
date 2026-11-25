@@ -32,6 +32,7 @@ final class AppModel {
     var goalTitle: String? { profile?.goalTitle }
     var condition: HeartCondition? { profile?.condition }
     var conditionTitle: String? { profile?.conditionTitle }
+    var heartRateLimit: Int? { profile?.heartRateLimit }
 
     var todayStep: StepIdea { Coach.nextStep(goal: goal, records: records) }
     var todayState: DayState { Coach.dayState(records: records) }
@@ -42,7 +43,8 @@ final class AppModel {
     var watchToday: WatchToday? {
         guard hasOnboarded else { return nil }
         let step = todayStep
-        return WatchToday(name: name, title: step.title, hint: step.hint, bigStep: step.bigStep)
+        return WatchToday(name: name, title: step.title, hint: step.hint, bigStep: step.bigStep,
+                          heartRateLimit: heartRateLimit)
     }
 
     // MARK: Intents
@@ -51,6 +53,13 @@ final class AppModel {
                             customCondition: String? = nil, baselineFear: Feeling? = nil) {
         context.insert(Profile(name: name, goal: goal, customGoal: customGoal, condition: condition,
                                customCondition: customCondition, baselineFear: baselineFear))
+        save()
+    }
+
+    /// Nil, or a number outside `HeartLimit.range`, removes the limit.
+    func setHeartRateLimit(_ limit: Int?) {
+        guard let profile else { return }
+        profile.heartRateLimit = limit.flatMap { HeartLimit.range.contains($0) ? $0 : nil }
         save()
     }
 
