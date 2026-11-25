@@ -13,7 +13,7 @@ struct WatchStepView: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            WatchOrb()
+            WatchOrb(calm: !workout.overLimit)
             switch workout.phase {
             case .idle:
                 Text("Start a step from your iPhone")
@@ -33,18 +33,27 @@ struct WatchStepView: View {
             }
         }
         .padding(.horizontal, 4)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .containerBackground(watchNavy, for: .navigation)
+        .animation(.smooth(duration: 0.5), value: workout.overLimit)
     }
 }
+
+/// The navy of the app icon: dark and plain, so mint, amber and red keep their contrast.
+let watchNavy = Color(red: 0.06, green: 0.14, blue: 0.18)
 
 /// The brand orb, sized for the Watch.
 struct WatchOrb: View {
     var size: CGFloat = 56
+    /// Mint when calm, amber past the doctor's limit. Always shown with words.
+    var calm = true
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var breathing = false
 
     var body: some View {
         Circle()
-            .fill(LinearGradient(colors: [Color(red: 0.5, green: 0.9, blue: 0.84), Color(red: 0, green: 0.76, blue: 0.66)],
+            .fill(LinearGradient(colors: calm ? [Color(red: 0.5, green: 0.9, blue: 0.84), Color(red: 0, green: 0.76, blue: 0.66)]
+                                              : [Color(red: 1.0, green: 0.82, blue: 0.54), Color(red: 1.0, green: 0.70, blue: 0.25)],
                                  startPoint: .topLeading, endPoint: .bottomTrailing))
             .frame(width: size, height: size)
             .scaleEffect(breathing ? 1.06 : 0.94)

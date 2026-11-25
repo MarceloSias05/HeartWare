@@ -11,8 +11,7 @@ import WatchKit
 
 private let mint = Color(red: 0, green: 0.76, blue: 0.66)
 private let red = Color(red: 0.84, green: 0, blue: 0.08)
-/// The navy of the app icon. Dark and plain, so the mint and red buttons keep their full contrast.
-private let navy = Color(red: 0.06, green: 0.14, blue: 0.18)
+private let navy = watchNavy
 
 struct WatchRootView: View {
     @Environment(StepWorkout.self) private var workout
@@ -163,30 +162,49 @@ struct WatchStepFlowView: View {
 }
 
 /// "You did it" with the words before and after. Never numbers on the wrist.
+/// The face settles from how the step felt before into how it feels now.
 struct WatchDoneView: View {
     let before: Feeling
     let after: Feeling
     let close: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var shown: Feeling?
+
+    private static let ink = Color(white: 0.1)
+    private func level(_ f: Feeling) -> Double { Double(Feeling.veryScared.rawValue - f.rawValue) }
 
     var body: some View {
+        let face = shown ?? before
         ScrollView {
-            VStack(spacing: 8) {
-                FeelingFace(calmness: Double(Feeling.veryScared.rawValue - after.rawValue) / 3)
+            VStack(spacing: 6) {
+                FeelingFace(calmness: level(face) / 3)
                     .scaleEffect(0.32)
                     .frame(width: 70, height: 48)
                     .accessibilityHidden(true)
                 Text(after.rawValue < before.rawValue ? "You did it" : "You showed up")
                     .font(.title3.bold())
                 Text("\(before.title) → \(after.title)")
-                    .font(.footnote)
+                    .font(.footnote.weight(.semibold))
                     .multilineTextAlignment(.center)
-                Text("Saved to your iPhone.").font(.footnote).foregroundStyle(.secondary)
+                Label("Saved to your iPhone", systemImage: "checkmark.circle.fill")
+                    .font(.footnote)
+                    .opacity(0.75)
                 Button("Close", action: close)
+                    .buttonStyle(.borderedProminent)
+                    .tint(Self.ink)
+                    .foregroundStyle(.white)
+                    .padding(.top, 4)
             }
+            .foregroundStyle(Self.ink)
             .frame(maxWidth: .infinity)
         }
-        .containerBackground(FeelingPalette.color(at: Double(Feeling.veryScared.rawValue - after.rawValue)).gradient,
-                             for: .navigation)
+        // Full-strength colour: containerBackground would dim it.
+        .background(FeelingPalette.color(at: level(face)).ignoresSafeArea())
+        .task {
+            guard before != after else { return }
+            try? await Task.sleep(for: .seconds(reduceMotion ? 0 : 0.4))
+            withAnimation(reduceMotion ? nil : .spring(duration: 0.8, bounce: 0)) { shown = after }
+        }
     }
 }
 
@@ -203,8 +221,11 @@ struct WatchHelpView: View {
                     NavigationLink {
                         WatchEmergencyView(symptom: symptom)
                     } label: {
-                        Text(symptom).foregroundStyle(red)
+                        Label(symptom, systemImage: "phone.fill")
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
                     }
+                    .listItemTint(red)
                 }
             }
             Section("Tell us more") {
