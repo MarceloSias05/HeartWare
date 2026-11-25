@@ -14,6 +14,7 @@ struct HelpView: View {
     @State private var noted: String?
     @State private var describing = false
     @State private var otherText = ""
+    @State private var showingBreath = false
 
     private let urgent = SymptomList.urgent
     private let other = SymptomList.other
@@ -56,6 +57,7 @@ struct HelpView: View {
                     Button("Close", systemImage: "xmark") { dismiss() }
                 }
             }
+            .sheet(isPresented: $showingBreath, onDismiss: { dismiss() }) { BreathingView() }
             .alert("What's going on?", isPresented: $describing) {
                 TextField("For example: my ankles are swollen", text: $otherText)
                 Button("Save") { note(SymptomList.describe(otherText)); otherText = "" }
@@ -63,7 +65,9 @@ struct HelpView: View {
             } message: {
                 Text("Tell us in your own words. Your doctor will see it.")
             }
+            // Only after a non-urgent symptom: urgent ones go straight to 112, never to breathing.
             .alert("Noted", isPresented: Binding(get: { noted != nil }, set: { if !$0 { noted = nil } })) {
+                Button("Breathe") { showingBreath = true }
                 Button("OK") { dismiss() }
             } message: {
                 Text("We'll add \"\(noted ?? "")\" to your summary and check on you in an hour. If it gets worse, come back here.")

@@ -36,12 +36,9 @@ struct WatchHomeView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     if let today = store.today {
                         VStack(alignment: .leading, spacing: 2) {
-                            HStack(spacing: 6) {
-                                WatchOrb(size: 14)
-                                Text(today.bigStep ? "Today's step · a big one" : "Today's step")
-                                    .font(.footnote)
-                                    .foregroundStyle(mint)
-                            }
+                            Text(today.bigStep ? "Today's step · a big one" : "Today's step")
+                                .font(.footnote)
+                                .foregroundStyle(mint)
                             Text(today.title)
                                 .font(.title3.bold())
                                 .fixedSize(horizontal: false, vertical: true)
@@ -58,7 +55,6 @@ struct WatchHomeView: View {
                         .buttonStyle(.borderedProminent)
                         .tint(mint)
                     } else {
-                        WatchOrb(size: 40)
                         Text("Open Steady on your iPhone to set up your first step.")
                             .font(.headline)
                     }

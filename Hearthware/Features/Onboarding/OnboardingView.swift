@@ -37,7 +37,8 @@ struct OnboardingView: View {
     private var welcome: some View {
         VStack(alignment: .leading, spacing: 0) {
             Container {
-                OrbView(size: 150)
+                // The brand mark: still, the only place the orb is decorative.
+                OrbView(size: 150, expanded: true)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 60)
             }

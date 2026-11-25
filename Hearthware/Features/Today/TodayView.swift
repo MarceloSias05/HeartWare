@@ -2,7 +2,8 @@
 //  TodayView.swift
 //  Hearthware
 //
-//  One page: how your body is, today's step, your story, and "Not feeling well".
+//  One page: how the last step felt, today's step, a breathing guide, your story,
+//  and "Not feeling well". The face says how the person feels; the orb only breathes.
 //
 
 import SwiftUI
@@ -11,13 +12,16 @@ struct TodayView: View {
     @Environment(AppModel.self) private var model
     @State private var showingStep = false
     @State private var showingHelp = false
+    @State private var showingBreath = false
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     header
-                    stateCard
+                    // No feeling yet: today's step comes first.
+                    if let last = model.records.last { stateCard(last.after) }
                     Button {
                         showingStep = true
                     } label: {
@@ -28,6 +32,11 @@ struct TodayView: View {
                     }
                     .buttonStyle(.pill)
                     .accessibilityHint("Starts today's step")
+                    Button { showingBreath = true } label: {
+                        row("Breathe", "wind", "A minute of slow breathing, whenever you want.")
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Opens the breathing guide")
                     NavigationLink {
                         StoryView()
                     } label: {
@@ -50,16 +59,21 @@ struct TodayView: View {
             .sheet(isPresented: $showingHelp) {
                 HelpView()
             }
+            .sheet(isPresented: $showingBreath) {
+                BreathingView()
+            }
         }
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack {
+            // Side by side; stacked at accessibility sizes so neither gets squeezed.
+            let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12)) : AnyLayout(HStackLayout())
+            layout {
                 Text(Date.now, format: .dateTime.weekday(.wide).day().month(.wide))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Color.hwSecondary)
-                Spacer()
+                if !typeSize.isAccessibilitySize { Spacer() }
                 // Part of the page, red and with words, so it is never missed and moves with the rest.
                 Button {
                     showingHelp = true
@@ -78,52 +92,44 @@ struct TodayView: View {
         .padding(.horizontal, 4)
     }
 
-    private var stateCard: some View {
+    /// The face of how the last step felt, on its colour, always with the words.
+    private func stateCard(_ feeling: Feeling) -> some View {
         let state = model.todayState
-        return Container {
-            VStack(spacing: 12) {
-                OrbView(calm: state.calm, size: 96)
-                    .padding(.vertical, 12)
-                Text(state.title)
-                    .font(.title.bold())
-                Text(state.detail)
-                    .font(.body)
-                    .foregroundStyle(Color.hwSecondary)
-                    .multilineTextAlignment(.center)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.bottom, 8)
+        return VStack(spacing: 8) {
+            FeelingFaceBadge(feeling: feeling)
+            Text("After your last step")
+                .font(.subheadline.weight(.semibold))
+                .opacity(0.75)
+            Text(feeling.title)
+                .font(.title.bold())
+            Text(state.detail)
         }
+        .multilineTextAlignment(.center)
+        .foregroundStyle(Color(white: 0.12))
+        .frame(maxWidth: .infinity)
+        .padding(20)
+        .background(FeelingFaceBadge.color(feeling), in: .rect(cornerRadius: 28))
         .accessibilityElement(children: .combine)
     }
 
     /// No number here: the limit itself only shows where it is typed.
     private var limitCard: some View {
-        Container {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Label("Your doctor's limit", systemImage: "heart.circle")
-                        .font(.headline)
-                    Text(model.heartRateLimit == nil ? "Add the heart rate limit your doctor gave you." : "Your Watch tells you when to slow down.")
-                        .font(.subheadline)
-                        .foregroundStyle(Color.hwSecondary)
-                }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(Color.hwSecondary)
-                    .accessibilityHidden(true)
-            }
-        }
+        row("Your doctor's limit", "heart.circle",
+            model.heartRateLimit == nil ? "Add the heart rate limit your doctor gave you." : "Your Watch tells you when to slow down.")
     }
 
     private var storyCard: some View {
+        row("Your story", "book.closed",
+            model.fearIsShrinking ? "Your steps feel easier than at the start." : "Every step you take will show up here.")
+    }
+
+    private func row(_ title: String, _ symbol: String, _ detail: String) -> some View {
         Container {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Label("Your story", systemImage: "book.closed")
+                    Label(title, systemImage: symbol)
                         .font(.headline)
-                    Text(model.fearIsShrinking ? "Your steps feel easier than at the start." : "Every step you take will show up here.")
+                    Text(detail)
                         .font(.subheadline)
                         .foregroundStyle(Color.hwSecondary)
                 }
@@ -134,6 +140,7 @@ struct TodayView: View {
                     .accessibilityHidden(true)
             }
         }
+        .contentShape(.rect)
     }
 }
 
