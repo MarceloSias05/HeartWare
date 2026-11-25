@@ -2,7 +2,7 @@
   <img src="docs/screenshots/icon.png" width="120" alt="Heartware app icon: a heart drawn as circuit traces">
 </p>
 
-<h1 align="center">Heartware</h1>
+<h1 align="center">Steady: heartware</h1>
 
 <p align="center">
   <b>An iPhone and Apple Watch app that helps heart patients get their life back, one small step at a time. Their cardiologist gets the data.</b>
@@ -29,13 +29,13 @@
 
 After a heart attack, heart surgery or a new diagnosis, many patients become afraid of their own heart. Climbing the stairs, walking to the market or playing with the grandkids starts to feel dangerous, so they stop. That fear is a recognised barrier to recovery. Meanwhile, the cardiologist sees the patient for a few minutes every few weeks and has to piece together what happened in between.
 
-## What Heartware does
+## What Steady does
 
 | For the patient | For the doctor |
 |---|---|
 | Turns the goal they want back ("Climbing my stairs") into a **ladder of small steps** | A **multi-page PDF**, shared from the phone with one tap |
 | Asks how they feel **before and after each step**, as a face, a colour and a word, **never a number** | **Trends from Apple Health:** 30 days before the patient joined vs. now, with Swift Charts |
-| **Apple Watch** keeps them company during the step and measures the heart rate and how fast it recovers | **26 metrics:** heart rate, HRV, blood pressure and mean arterial pressure, SpO₂, VO₂ max, AFib burden, rhythm alerts, walking asymmetry, six-minute walk, weight… |
+| **Apple Watch** keeps them company during the step, measures the heart rate and how fast it recovers, and, if their doctor gave them a heart rate limit, taps the wrist and says **"Slow down a little"** when they pass it | **26 metrics:** heart rate, HRV, blood pressure and mean arterial pressure, SpO₂, VO₂ max, AFib burden, rhythm alerts, walking asymmetry, six-minute walk, weight… |
 | **Not feeling well?** Chest pain goes straight to the emergency number; anything else is logged, with a check-in an hour later | **An opening paragraph written on device** by Apple Intelligence, checked against the data before it is used |
 
 <p align="center">
@@ -77,6 +77,7 @@ Everything can be reported from the wrist. The design follows the watchOS Human 
   - Statistics and statistics-collection queries (daily series for the charts).
   - Characteristics (age, biological sex), category events (irregular rhythm, high and low heart rate alerts) and ECGs.
   - A **live workout session** on the Watch that measures peak heart rate and **heart-rate recovery**: the seconds until the heart is back within 10 bpm of its starting rate.
+  - An optional **heart rate limit from the doctor**, typed once on the iPhone. The Watch compares every live reading against it and switches to "Slow down a little" with a haptic, in words only. It only returns to "doing well" 5 bpm under the limit, so it doesn't buzz on every beat around it (`HeartLimit`).
 - **A real document pipeline in SwiftUI.**
   - SwiftUI views rendered with `ImageRenderer` into a multi-page A4 PDF.
   - Pages adapt to the data: a trends page only when there is something to chart, and steps tables paginated by how much room each row takes.
@@ -172,9 +173,9 @@ To try the Watch:
 |---|---|
 | Marcelo Sias | [@MarceloSias05](https://github.com/MarceloSias05) · [Portfolio](https://marcelosias.vercel.app) |
 | Guillermo Lira | [@2kLira](https://github.com/2kLira) |
-| Himawant | [@himawant](https://github.com/himawant) |
-| Aleksandra | [@Aleksandra20022](https://github.com/Aleksandra20022) |
-| Ghazaleh | — |
+| Himawant Somarowthu | [@himawant](https://github.com/himawant) |
+| Aleksandra Koziol | [@Aleksandra20022](https://github.com/Aleksandra20022) |
+| Ghazaleh Vaezi | — |
 
 ## Copyright
 

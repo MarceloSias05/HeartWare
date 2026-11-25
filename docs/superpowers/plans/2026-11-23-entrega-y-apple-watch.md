@@ -18,7 +18,7 @@
 
 | Parte | Tarea | Estado |
 |---|---|---|
-| A | A1 Decisiones | ❌ Pendiente: nombre, statement, "Slow down", Signing |
+| A | A1 Decisiones | 🟡 Nombre ✅ "Steady: heartware", statement ✅, "Slow down" ✅ (sin umbral inventado; solo con el límite que escribe el paciente, C18). Pendiente: Signing |
 | A | A2 TestFlight build 1 | ❌ Pendiente |
 | A | A3 Repo, summary, frameworks | ❌ Pendiente (repo sigue privado) |
 | B | B1 Target de tests | ⏭️ Saltada: los chequeos corren con `Checks/run.sh` (21 chequeos, todos pasan) |
@@ -40,14 +40,19 @@
 | C | C14 Ícono nuevo: "circuit heart" | ✅ Hecha. Corazón de pistas de circuito (hardware), pulso adentro (corazón) y pista ámbar que sube (longevidad). Light, dark, tinted y Watch; se regenera con `docs/app-icon.swift` |
 | C | C15 El párrafo de Apple Intelligence no puede inventar datos | ✅ Hecha. Inventó una edad (24) que la app nunca pide. Ahora: las instrucciones prohíben mencionar edad y sexo, y cada número del párrafo debe estar en los datos que recibió; si no, se genera otra vez y, si vuelve a fallar, el PDF sale sin párrafo |
 | C | C16 Datos del cuerpo desde Apple Health | ✅ Hecha. Encabezado del PDF: edad, sexo, altura, peso e IMC (calculado); tabla "Body" y gráfica de peso, con el cambio en kg (subir unos kilos puede ser retención de líquido). El párrafo menciona la edad solo si viene de Salud |
+| C | C18 Límite de pulso del doctor (2026-11-25) | ✅ Hecha, en `main`. Se quitó el botón "Demo: slow down" de `WithYouView`. Tarjeta "Your doctor's limit" en Today → `HeartLimitView` (el paciente escribe el número que le dio su doctor, 60–220; vacío = sin límite). Viaja al Watch dentro de `WatchToday`; durante el paso, si el pulso lo pasa, el Watch dice "Slow down a little" con háptica, sin número. Vuelve a "You're doing well" 5 bpm abajo (`HeartLimit` en `Shared/`, con chequeos). Sin probar en un Watch real |
 | C | C17 Todo desde el Apple Watch (HIG) | ✅ Hecha en `feat/watch-everything`. Inicio con el paso de hoy; paso completo en el Watch: sentimiento antes y después con la Digital Crown (cara y color como en el iPhone, háptica por sentimiento), aviso del doctor en pasos grandes, pulso y recuperación, nota dictada. "Not feeling well" con 112 y Emergency SOS. Todo viaja al iPhone con `transferUserInfo` (en cola, no se pierde) y se guarda en SwiftData con su fecha. El iPhone le manda al Watch el paso de hoy |
 
 **Entregables hoy:**
-- **App Name:** sin decidir (Heartware / Hearthware).
-- **App Icon:** ✅ "circuit heart" en `Assets.xcassets/AppIcon.appiconset` (light, dark, tinted) y en el Watch.
-- **App Statement:** borrador en A1, sin aprobar.
+- **App Name:** ✅ "Steady: heartware" (team: Heartware). Nombre visible "Steady" en iPhone y Watch (A2 Step 1 hecho 2026-11-25), también en permisos de Salud, notificación, título del Watch y PDF. El código y los targets siguen llamándose Hearthware.
+- **App Icon:** ✅ "circuit heart" en `Assets.xcassets/AppIcon.appiconset` (light, dark, tinted) y en el Watch. PNG de Icon Composer subido al formulario como `AppIcon.HeartWare.png`.
+- **App Statement:** ✅ entregado en el formulario:
+  > Steady helps cardiac patients regain confidence, overcome fear of physical activity and gradually return to everyday life through small, achievable steps. At the same time it provides cardiologists with meaningful health insights between appointments.
+  >
+  > Our goal is to bridge the gap between clinical care and everyday recovery, helping patients regain trust in their hearts, one small step at a time.
+- **Equipo (nombres completos, como en la diapositiva):** Arnoldo Marcelo Sias Saucedo, Himawant Somarowthu, Guillermo Lira, Aleksandra Koziol, Ghazaleh Vaezi.
 - **App Summary Template:** ❌ falta llenarlo.
-- **Git:** https://github.com/MarceloSias05/Hearthware (privado).
+- **Git:** https://github.com/MarceloSias05/Hearthware (público).
 - **TestFlight:** ❌ falta.
 - **Frameworks** (sacados de los `import` del código, 2026-11-24):
   - **SwiftUI:** toda la interfaz, en iPhone y Watch.
@@ -68,7 +73,7 @@
 - Bundle ID actual: `com.marcelo.academy.Heartware`; team del target `N2TLVFPKL4`, pero el proyecto todavía dice `VWUWR4BNBX`. Hay que unificarlos antes de archivar.
 - El texto ya no promete un Watch que no existe: sin Watch, el botón dice "Start your step" y `WithYouView` dice "Take it at your own pace".
 - El iPhone abre la app del Watch con `HKHealthStore.startWatchApp` y le pasa el paso por application context. Cada paso tiene un id, y se ignora cualquier resultado o cancelación de otro paso.
-- No hay "Slow down" automático: A1 sigue sin decidirse y el plan recomienda no avisar.
+- "Slow down" solo con el límite que el paciente escribe "según su doctor" (C18); sin límite, el Watch solo acompaña y mide.
 - `WatchResult.swift` vive en `Shared/`, con membresía de carpeta en `project.xcproj`. `WatchLink` vive en `Hearthware/Services/`.
 
 ## Global Constraints
@@ -79,7 +84,7 @@
 - El rojo `hwRed` es solo para ayuda y emergencias. El teal `hwMint` (#00C2A8) es el color de marca.
 - Si Reduce Motion está activo, el orbe no se anima.
 - Sin Watch, sin permiso de HealthKit o sin conexión, el paso tiene que funcionar igual (el fallback es `WithYouView`).
-- No inventar umbrales médicos: "Slow down" automático solo con la decisión explícita de A1.
+- No inventar umbrales médicos: "Slow down" solo con el límite que escribe el paciente (C18).
 - Los commits no llevan líneas de atribución a Claude.
 - Para compilar desde la terminal: `export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
 
@@ -97,9 +102,9 @@
 
 ### Task A1: Decisiones que bloquean
 
-- [ ] **Nombre de la app:** Heartware (Sketch, decks) o Hearthware (Xcode).
-- [ ] **App Statement:** aprobar o reescribir: *"For people recovering from a heart event who are afraid to move again, Heartware turns the life they want back into small, calm steps, using words, never numbers, and gives their doctor a clear summary of the progress."*
-- [ ] **"Slow down" en el Watch:**
+- [x] **Nombre de la app:** "Steady: heartware" (2026-11-25).
+- [x] **App Statement:** el del formulario (ver "Entregables hoy").
+- [x] **"Slow down" en el Watch:** (b) el 2026-11-25: sin aviso si no hay límite; con el límite que escribe el paciente "según su doctor", el Watch avisa (C18).
   - (a) Sin aviso automático: el Watch solo acompaña y mide (recomendado).
   - (b) Límite de pulso que escribe el paciente "según su doctor".
 - [ ] **Team y bundle ID:** unificar el team (`N2TLVFPKL4` en el target, `VWUWR4BNBX` en el proyecto) y registrar `com.marcelo.academy.Heartware` en App Store Connect.
