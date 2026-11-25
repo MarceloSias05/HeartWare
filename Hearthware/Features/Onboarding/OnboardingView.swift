@@ -42,8 +42,8 @@ struct OnboardingView: View {
     private var welcome: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                // The orb breathes on its own: the first thing the app teaches is to slow down.
-                OrbView(size: 160)
+                // The brand mark: still, the only place the orb is decorative.
+                OrbView(size: 160, expanded: true)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 72)
                 Text("Let's get back\nto your life")

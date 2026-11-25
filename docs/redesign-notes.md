@@ -17,7 +17,7 @@ Reviewed on an iPhone 17 Pro and an Apple Watch Series 12 (46 mm) simulator, in 
 ## Per screen
 
 ### Onboarding
-- Welcome: the orb now floats on its own and breathes (the first thing the app teaches is to slow down), instead of sitting in a grey box. Scrolls at large text; the button stays at the bottom.
+- Welcome: the orb now floats on its own as a still brand mark, instead of sitting in a grey box. Scrolls at large text; the button stays at the bottom.
 - "1 of 5" text → five short bars, the same on the question pages and the feeling page.
 - Apple Health page: the red Health icon broke "red only for help". It is gone; the three paragraphs became one sentence and two short points with mint icons ("Read only", "Blood pressure at home?").
 - Finishing onboarding is a one-way door: the root switches to the tabs, so there is no back into onboarding (unchanged, checked).
@@ -48,16 +48,52 @@ Reviewed on an iPhone 17 Pro and an Apple Watch Series 12 (46 mm) simulator, in 
 ### Apple Watch
 - Titles are mint (Watch accent), not grey.
 - "You did it": full-strength feeling colour with dark ink (the dimmed gradient made it muddy), and the face settles from before to after.
-- During a step: navy background like the home; past the doctor's limit the orb turns amber at the same time as the words change to "Slow down a little".
+- During a step: navy background like the home, no orb; past the doctor's limit "Slow down a little" offers the breathing guide.
 - Not feeling well: urgent rows are red platters with a phone icon and white text. "Call 112 now" sits on plain black so the red button is at full strength (the red gradient was dimmed and its footnote hard to read).
 
 ## Test by hand on a real device
 - [ ] Digital Crown haptics in the Watch feeling picker (one detent per feeling).
 - [ ] Dictating and scribbling a note on the Watch.
 - [ ] Starting a step from the iPhone with the Watch on: the Watch opens, the iPhone shows "Follow your Watch", and the result arrives.
-- [ ] Past the doctor's limit: wrist tap + amber orb + "Slow down a little"; back to calm 5 bpm under the limit.
+- [ ] Past the doctor's limit: wrist tap + "Slow down a little" + "Breathe"; back to calm 5 bpm under the limit.
 - [ ] Real Health data in the doctor summary and Trends charts.
 - [ ] Calling 112 from the iPhone and the Watch (use a test SIM or cancel before it connects).
 - [ ] The check-in notification an hour after "Noted".
 - [ ] Press feedback and haptics feel right under the finger (simulators don't play haptics).
-- [ ] Reduce Motion on: orb still, step and result cross-fade only, faces jump straight to the "after" feeling.
+- [ ] Reduce Motion on: step and result cross-fade only, faces jump straight to the "after" feeling.
+
+## Breathing guide (`feat/breathing-guide`)
+
+The orb used to breathe on its own in seven places, at a 5 s rhythm tied to nothing. Now the orb has one job: it is the breathing guide. The feeling face is the only thing that says how the person feels.
+
+### What changed
+- **New breathing guide** (`BreathingView` on iPhone, `WatchBreathingView` on the Watch):
+  - The orb grows on "Breathe in" (about 4 s) and shrinks on "Breathe out" (about 6 s), with slow ease in/out.
+  - After about a minute it closes by itself; "Done" stops it at any time.
+  - Words only: no counters, timers or scores, and no health claims.
+  - iPhone: a sheet with medium and large detents. A firmer soft tap marks each breath in and a lighter one each breath out.
+  - Watch: different taps for in (`directionUp`) and out (`directionDown`).
+  - Reduce Motion: the orb doesn't grow; it fades between full and half strength, and the words and taps still change.
+  - VoiceOver announces "Breathe in" / "Breathe out".
+- **Where the guide opens (only here):**
+  1. Today: a "Breathe" row, first in the grouped card with Your story and Your doctor's limit.
+  2. Before a step: an optional "Breathe first" button at the top of the "How do you feel about it?" screen.
+  3. Watch: a "Breathe" button under "Slow down a little", only when the doctor's limit is passed. No limit means no warning and no button.
+  4. After a non-urgent symptom: a "Breathe" button on the "Noted" confirmation. Urgent symptoms (chest pain, very short of breath) still go straight to the 112 screen, with no guide there.
+- **Orb removed where it did nothing:**
+  - Today: the state card is now the face of how the last step felt, on its colour, with the word ("After your last step · A little nervous"). With no step yet, there is no card and "Your step" comes first.
+  - "A big step" shows the face of how they feel about the step. The result keeps the redesign's face that settles from before to after.
+  - "Follow your Watch" shows a still Watch icon, and "You're doing well" (step without a Watch) a still walking figure.
+  - Watch home: the small orb next to "Today's step" and the one on the empty screen are gone.
+  - Watch step screen: no orb. It scrolls, so the text is never cut.
+  - Onboarding keeps the orb as a still brand mark (it no longer breathes).
+- **Unchanged:** Your story, history and trends, the PDF and the data layer.
+
+### Test by hand (real iPhone + Watch)
+- [ ] iPhone guide: a firmer tap on each "Breathe in", a lighter one on each "Breathe out", in time with the orb.
+- [ ] Watch guide: the in and out taps feel different and arrive with the words.
+- [ ] Watch: past the limit during a step, "Slow down a little" shows "Breathe"; the guide opens and the screen stays on until it ends (the workout session keeps the app in front). With no limit set, nothing appears.
+- [ ] After "Dizzy" (or another non-urgent symptom), "Breathe" on the Noted confirmation opens the guide. Chest pain and very short of breath go to 112 with no guide.
+- [ ] The guide closes by itself after about a minute, and "Done" stops it at any point.
+- [ ] Reduce Motion on: the orb fades without growing; the words and taps still change.
+- [ ] VoiceOver: "Breathe in" / "Breathe out" are announced, and "Done" is easy to reach.

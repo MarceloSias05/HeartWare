@@ -25,6 +25,7 @@ struct StepFlowView: View {
     @State private var noteAfter = ""
     @State private var record: StepRecord?
     @State private var watchResult: WatchResult?
+    @State private var showingBreath = false
 
     /// `start` opens on a later phase, for previews.
     init(idea: StepIdea, start: Phase = .before) {
@@ -53,6 +54,12 @@ struct StepFlowView: View {
                         Button("Close", systemImage: "xmark") { dismiss() }
                     }
                 }
+                // Optional, never forced: a minute of breathing before starting.
+                ToolbarItem(placement: .topBarTrailing) {
+                    if phase == .before {
+                        Button("Breathe first") { showingBreath = true }
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     if phase == .result {
                         Button("Done", systemImage: "checkmark") { dismiss() }
@@ -62,6 +69,7 @@ struct StepFlowView: View {
             }
         }
         .interactiveDismissDisabled(phase == .withYou || phase == .onWatch)
+        .sheet(isPresented: $showingBreath) { BreathingView() }
         .onAppear {
             watchLink.onResult = { result in
                 watchResult = result
@@ -97,15 +105,18 @@ struct StepFlowView: View {
 
     private var askDoctorView: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Container {
-                VStack(spacing: 12) {
-                    OrbView(calm: false, size: 110)
-                        .padding(.vertical, 20)
-                    Text("A big step").font(.title2.bold())
-                    Text(idea.title).foregroundStyle(Color.hwSecondary)
-                }
-                .frame(maxWidth: .infinity)
+            // How they said they feel about it, on its colour, with the words.
+            VStack(spacing: 8) {
+                FeelingFaceBadge(feeling: before)
+                Text("A big step").font(.title2.bold())
+                Text(idea.title)
             }
+            .multilineTextAlignment(.center)
+            .foregroundStyle(Color(white: 0.12))
+            .frame(maxWidth: .infinity)
+            .padding(Space.card)
+            .background(FeelingFaceBadge.color(before), in: .rect(cornerRadius: Radius.card))
+            .accessibilityElement(children: .combine)
             Text("Ask your\ndoctor first")
                 .font(.largeTitle.bold())
                 .padding(.top, 28)
@@ -243,6 +254,21 @@ struct ChangeCard: View {
     }
 }
 
+/// The feeling face, sized for a card. Its background colour comes from `color(_:)`.
+struct FeelingFaceBadge: View {
+    let feeling: Feeling
+    static func level(_ f: Feeling) -> Double { Double(Feeling.veryScared.rawValue - f.rawValue) }
+    static func color(_ f: Feeling) -> Color { FeelingPalette.color(at: level(f)) }
+
+    var body: some View {
+        FeelingFace(calmness: Self.level(feeling) / 3)
+            .scaleEffect(0.5)
+            .frame(width: 120, height: 84)
+            .padding(.vertical, 8)
+            .accessibilityHidden(true)
+    }
+}
+
 /// While the step happens on the Watch. "End step here" is the way out if the Watch stops answering.
 struct OnWatchView: View {
     let onEndHere: () -> Void
@@ -250,11 +276,11 @@ struct OnWatchView: View {
     var body: some View {
         VStack(spacing: 16) {
             Spacer()
-            OrbView(calm: true, size: 180)
-            Label("On your Apple Watch", systemImage: "applewatch")
-                .font(.subheadline.weight(.semibold))
+            // Still on purpose: the step is on the wrist, nothing to do here.
+            Image(systemName: "applewatch")
+                .font(.system(size: 96, weight: .light))
                 .foregroundStyle(Color.hwSecondary)
-                .padding(.top, 32)
+                .accessibilityHidden(true)
             Text("Follow your Watch")
                 .font(.title.bold())
             Text("It keeps you company while you move. Tap End step on your wrist when you're done.")
@@ -277,7 +303,10 @@ struct WithYouView: View {
     var body: some View {
         VStack(spacing: 16) {
             Spacer()
-            OrbView(calm: true, size: 180, pulses: true)
+            Image(systemName: "figure.walk")
+                .font(.system(size: 96, weight: .light))
+                .foregroundStyle(Color.hwSecondary)
+                .accessibilityHidden(true)
             Text("You're doing well")
                 .font(.title.bold())
                 .padding(.top, 24)

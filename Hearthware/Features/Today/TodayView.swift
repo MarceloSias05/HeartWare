@@ -13,6 +13,7 @@ struct TodayView: View {
     @State private var showingStep = false
     @State private var showingHelp = false
     @State private var showingLimit = false
+    @State private var showingBreath = false
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
@@ -20,7 +21,8 @@ struct TodayView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     header
-                    stateCard
+                    // No feeling yet: today's step comes first.
+                    if let last = model.records.last { stateCard(last.after) }
                     stepCard
                     moreCard
                 }
@@ -34,6 +36,9 @@ struct TodayView: View {
             .sheet(isPresented: $showingHelp) {
                 HelpView()
                     .presentationDragIndicator(.visible)
+            }
+            .sheet(isPresented: $showingBreath) {
+                BreathingView()
             }
             .sheet(isPresented: $showingLimit) {
                 NavigationStack { HeartLimitView() }
@@ -94,21 +99,22 @@ struct TodayView: View {
 
     // MARK: Cards
 
-    private var stateCard: some View {
-        let state = model.todayState
-        return Container {
-            VStack(spacing: 8) {
-                OrbView(calm: state.calm, size: 96)
-                    .padding(.vertical, 20)
-                Text(state.title)
-                    .font(.title2.bold())
-                    .contentTransition(.opacity)
-                Text(state.detail)
-                    .foregroundStyle(Color.hwSecondary)
-            }
-            .multilineTextAlignment(.center)
-            .frame(maxWidth: .infinity)
+    /// The face of how the last step felt, on its colour, always with the words.
+    private func stateCard(_ feeling: Feeling) -> some View {
+        VStack(spacing: 8) {
+            FeelingFaceBadge(feeling: feeling)
+            Text("After your last step")
+                .font(.subheadline.weight(.semibold))
+                .opacity(0.75)
+            Text(feeling.title)
+                .font(.title2.bold())
+            Text(model.todayState.detail)
         }
+        .multilineTextAlignment(.center)
+        .foregroundStyle(Color(white: 0.12))
+        .frame(maxWidth: .infinity)
+        .padding(Space.card)
+        .background(FeelingFaceBadge.color(feeling), in: .rect(cornerRadius: Radius.card))
         .accessibilityElement(children: .combine)
     }
 
@@ -134,6 +140,13 @@ struct TodayView: View {
     /// Story and limit in one grouped card, like a short settings list.
     private var moreCard: some View {
         VStack(spacing: 0) {
+            Button {
+                showingBreath = true
+            } label: {
+                row("Breathe", "wind", "A minute of slow breathing, whenever you want.")
+            }
+            .accessibilityHint("Opens the breathing guide")
+            Divider().padding(.leading, 60)
             NavigationLink {
                 StoryView()
             } label: {

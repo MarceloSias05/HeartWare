@@ -116,6 +116,7 @@ struct NotedView: View {
     let symptom: String
     let done: () -> Void
     @State private var landed = false
+    @State private var breathing = false
 
     var body: some View {
         VStack(spacing: 16) {
@@ -132,9 +133,13 @@ struct NotedView: View {
                 .foregroundStyle(Color.hwSecondary)
                 .multilineTextAlignment(.center)
             Spacer()
+            // Only here, after a non-urgent symptom: urgent ones go straight to 112, never to breathing.
+            Button { breathing = true } label: { Label("Breathe", systemImage: "wind") }
+                .buttonStyle(.pillSecondary)
             Button("Done", action: done)
                 .buttonStyle(.pill)
         }
+        .sheet(isPresented: $breathing) { BreathingView() }
         .padding(.horizontal, Space.screen)
         .padding(.bottom, 8)
         .sensoryFeedback(.success, trigger: landed)
