@@ -20,7 +20,6 @@ enum HealthHistory {
         /// Total in the window divided by its days.
         case perDay(HKQuantityTypeIdentifier, HKUnit)
         case events(HKCategoryTypeIdentifier)
-        case ecg
         /// Calculated from systolic and diastolic, not read.
         case derived
     }
@@ -42,7 +41,6 @@ enum HealthHistory {
         case .irregularRhythmAlerts: .events(.irregularHeartRhythmEvent)
         case .highHeartRateAlerts: .events(.highHeartRateEvent)
         case .lowHeartRateAlerts: .events(.lowHeartRateEvent)
-        case .ecgRecordings: .ecg
         case .steps: .perDay(.stepCount, .count())
         case .exerciseMinutes: .perDay(.appleExerciseTime, .minute())
         case .flightsClimbed: .perDay(.flightsClimbed, .count())
@@ -63,7 +61,7 @@ enum HealthHistory {
             switch source(metric) {
             case .average(let id, _), .perDay(let id, _): types.insert(HKQuantityType(id))
             case .events(let id): types.insert(HKCategoryType(id))
-            case .ecg, .derived: break
+            case .derived: break
             }
         }
         return types
@@ -101,7 +99,26 @@ enum HealthHistory {
 
         return HealthReport(readings: HealthMetric.allCases.map {
             MetricReading(metric: $0, before: values[$0]?.before, recent: values[$0]?.recent)
-        }, body: await body(now: now), trends: trends)
+        }, body: await body(now: now), trends: trends, ecg: await ecg(in: before, recent))
+    }
+
+    /// The classification of every ECG in each window, as Health shows it.
+    private static func ecg(in before: DateInterval, _ recent: DateInterval) async -> (before: [ECGResult], recent: [ECGResult])? {
+        func read(_ window: DateInterval) async -> [ECGResult]? {
+            let predicate = HKQuery.predicateForSamples(withStart: window.start, end: window.end)
+            let query = HKSampleQueryDescriptor(predicates: [.electrocardiogram(predicate)], sortDescriptors: [])
+            return (try? await query.result(for: store))?.map { ecg in
+                switch ecg.classification {
+                case .sinusRhythm: .sinusRhythm
+                case .atrialFibrillation: .afib
+                case .inconclusiveHighHeartRate: .highHeartRate
+                case .inconclusiveLowHeartRate: .lowHeartRate
+                default: .inconclusive
+                }
+            }
+        }
+        guard let b = await read(before), let r = await read(recent), !(b.isEmpty && r.isEmpty) else { return nil }
+        return (b, r)
     }
 
     /// Age and sex from the Health profile, latest height and weight. Nil fields when not set or not shared.
@@ -130,7 +147,7 @@ enum HealthHistory {
         switch source(metric) {
         case .average(let i, let u): (id, unit, options) = (i, u, .discreteAverage)
         case .perDay(let i, let u): (id, unit, options) = (i, u, .cumulativeSum)
-        case .events, .ecg, .derived: return []
+        case .events, .derived: return []
         }
         let predicate = HKQuery.predicateForSamples(withStart: start, end: end)
         let query = HKStatisticsCollectionQueryDescriptor(
@@ -166,9 +183,6 @@ enum HealthHistory {
             let query = HKSampleQueryDescriptor(predicates: [.categorySample(type: HKCategoryType(id), predicate: predicate)],
                                                 sortDescriptors: [])
             // Health can't tell "not shared" from "none": with no access this reads as no alerts.
-            return (try? await query.result(for: store)).map { Double($0.count) }
-        case .ecg:
-            let query = HKSampleQueryDescriptor(predicates: [.electrocardiogram(predicate)], sortDescriptors: [])
             return (try? await query.result(for: store)).map { Double($0.count) }
         case .derived:
             return nil

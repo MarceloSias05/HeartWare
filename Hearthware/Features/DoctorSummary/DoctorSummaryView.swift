@@ -17,6 +17,10 @@ struct DoctorSummaryView: View {
             VStack(alignment: .leading, spacing: 0) {
                 Text("Everything your doctor needs, numbers included. You don't have to read them.")
                     .foregroundStyle(Color.hwSecondary)
+                Label("Measure your blood pressure at home? Add each reading in the Health app (Browse › Heart › Blood Pressure › Add Data) and it will be in this summary.",
+                      systemImage: "heart.text.clipboard")
+                    .font(.subheadline)
+                    .padding(.top, 12)
                 Container {
                     // Images of the real pages, so the preview always matches the PDF and fits any width.
                     if previews.isEmpty {
@@ -168,7 +172,7 @@ struct DoctorPDFPage: View {
                 trends
             case .measures:
                 if let health = summary.health {
-                    healthTable("Heart", health.shown(in: .heart))
+                    healthTable("Heart", health.shown(in: .heart), ecg: health.ecg)
                     healthTable("Movement and tiredness", health.shown(in: .movement))
                     healthTable("Body", health.shown(in: .body))
                 }
@@ -192,7 +196,7 @@ struct DoctorPDFPage: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("HEARTWARE  ·  PATIENT SUMMARY")
+            Text("STEADY  ·  PATIENT SUMMARY")
                 .font(.system(size: 10, weight: .bold)).kerning(1)
                 .foregroundStyle(grey)
             Text(summary.name).font(.system(size: 24, weight: .bold))
@@ -302,8 +306,9 @@ struct DoctorPDFPage: View {
     // MARK: Tables
 
     @ViewBuilder
-    private func healthTable(_ title: String, _ rows: [MetricReading]) -> some View {
-        if !rows.isEmpty {
+    private func healthTable(_ title: String, _ rows: [MetricReading],
+                             ecg: (before: [ECGResult], recent: [ECGResult])? = nil) -> some View {
+        if !rows.isEmpty || ecg != nil {
             let (before, recent) = summary.windows
             Text(title).font(.system(size: 13, weight: .bold))
             Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 2) {
@@ -323,6 +328,16 @@ struct DoctorPDFPage: View {
                         Text(r.change)
                     }
                     .font(.system(size: 9))
+                }
+                if let ecg {
+                    GridRow {
+                        Text("ECG results (Apple Watch)")
+                        Text(ECGResult.line(ecg.before))
+                        Text(ECGResult.line(ecg.recent))
+                        Text("–")
+                    }
+                    .font(.system(size: 9))
+                    .fixedSize(horizontal: false, vertical: true)
                 }
             }
             Divider()

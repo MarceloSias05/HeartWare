@@ -12,6 +12,8 @@ struct HelpView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @State private var noted: String?
+    @State private var describing = false
+    @State private var otherText = ""
 
     private let urgent = SymptomList.urgent
     private let other = SymptomList.other
@@ -36,7 +38,9 @@ struct HelpView: View {
 
                     sectionHeader("Tell us more").padding(.top, 16)
                     ForEach(other, id: \.self) { item in
-                        Button { note(item) } label: { row(item, color: .primary) }
+                        Button {
+                            if item == SymptomList.somethingElse { describing = true } else { note(item) }
+                        } label: { row(item, color: .primary) }
                             .buttonStyle(.plain)
                     }
 
@@ -51,6 +55,13 @@ struct HelpView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Close", systemImage: "xmark") { dismiss() }
                 }
+            }
+            .alert("What's going on?", isPresented: $describing) {
+                TextField("For example: my ankles are swollen", text: $otherText)
+                Button("Save") { note(SymptomList.describe(otherText)); otherText = "" }
+                Button("Cancel", role: .cancel) { otherText = "" }
+            } message: {
+                Text("Tell us in your own words. Your doctor will see it.")
             }
             .alert("Noted", isPresented: Binding(get: { noted != nil }, set: { if !$0 { noted = nil } })) {
                 Button("OK") { dismiss() }

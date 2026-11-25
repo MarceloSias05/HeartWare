@@ -168,6 +168,9 @@ check(!HeartLimit.isOver(bpm: 200, limit: nil, wasOver: false), "noLimitNeverOve
 check(HeartLimit.isOver(bpm: 121, limit: 120, wasOver: false) && !HeartLimit.isOver(bpm: 120, limit: 120, wasOver: false), "overOnlyPastLimit")
 check(HeartLimit.isOver(bpm: 117, limit: 120, wasOver: true) && !HeartLimit.isOver(bpm: 115, limit: 120, wasOver: true), "staysOverUntilMarginBelow")
 check(WatchMessage.today(from: WatchMessage.todayContext(WatchToday(name: "A", title: "t", hint: "h", bigStep: false, heartRateLimit: 120)))?.heartRateLimit == 120, "limitReachesWatch")
+check(SymptomList.describe("  swollen ankles \n") == "Something else: swollen ankles" && SymptomList.describe(" ") == "Something else", "somethingElseKeepsWords")
+check(HealthMetric.walkingAsymmetry.format(0.012) == "1.2%" && HealthMetric.walkingAsymmetry.format(0.0085) == "0.9%", "smallPercentsKeepADecimal")
+check(ECGResult.line([.sinusRhythm, .afib, .sinusRhythm]) == "1 AFib, 2 sinus rhythm" && ECGResult.line([]) == "None", "ecgResultsLine")
 check(SymptomList.urgent.contains("Chest pain or pressure") && SymptomList.other.contains("Dizzy"), "symptomListShared")
 
 // AppModel + SwiftData

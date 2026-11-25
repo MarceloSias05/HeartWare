@@ -60,7 +60,7 @@ extension HealthMetric {
         case .stepLength: "cm"
         case .sixMinuteWalk: "m"
         case .weight: "kg"
-        case .irregularRhythmAlerts, .highHeartRateAlerts, .lowHeartRateAlerts, .ecgRecordings: ""
+        case .irregularRhythmAlerts, .highHeartRateAlerts, .lowHeartRateAlerts: ""
         }
     }
 }

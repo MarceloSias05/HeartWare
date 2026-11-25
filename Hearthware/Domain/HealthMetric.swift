@@ -13,7 +13,7 @@ nonisolated enum HealthMetric: String, CaseIterable, Sendable {
     // Heart
     case heartRate, restingHeartRate, walkingHeartRate, heartRateVariability, heartRateRecovery
     case bloodOxygen, systolic, diastolic, meanArterialPressure, respiratoryRate, vo2Max, afibBurden
-    case irregularRhythmAlerts, highHeartRateAlerts, lowHeartRateAlerts, ecgRecordings
+    case irregularRhythmAlerts, highHeartRateAlerts, lowHeartRateAlerts
     // Movement and tiredness
     case steps, exerciseMinutes, flightsClimbed, walkingSpeed, stepLength
     case walkingAsymmetry, doubleSupport, walkingSteadiness, sixMinuteWalk
@@ -48,7 +48,6 @@ nonisolated enum HealthMetric: String, CaseIterable, Sendable {
         case .irregularRhythmAlerts: "Irregular rhythm alerts"
         case .highHeartRateAlerts: "High heart rate alerts"
         case .lowHeartRateAlerts: "Low heart rate alerts"
-        case .ecgRecordings: "ECG recordings"
         case .steps: "Steps"
         case .exerciseMinutes: "Exercise"
         case .flightsClimbed: "Flights climbed"
@@ -62,10 +61,10 @@ nonisolated enum HealthMetric: String, CaseIterable, Sendable {
         }
     }
 
-    /// Alerts and ECGs are counts in the window; everything else is a value.
+    /// Alerts are counts in the window; everything else is a value.
     var isCount: Bool {
         switch self {
-        case .irregularRhythmAlerts, .highHeartRateAlerts, .lowHeartRateAlerts, .ecgRecordings: true
+        case .irregularRhythmAlerts, .highHeartRateAlerts, .lowHeartRateAlerts: true
         default: false
         }
     }
@@ -74,12 +73,13 @@ nonisolated enum HealthMetric: String, CaseIterable, Sendable {
         switch self {
         case .heartRate, .restingHeartRate, .walkingHeartRate, .heartRateRecovery: "\(Int(value.rounded())) bpm"
         case .heartRateVariability: "\(Int(value.rounded())) ms"
-        case .bloodOxygen, .afibBurden, .walkingAsymmetry, .doubleSupport, .walkingSteadiness:
-            "\(Int((value * 100).rounded()))%"
+        // Usually a few percent: whole numbers would show 1.2% and 0.9% both as "1%".
+        case .afibBurden, .walkingAsymmetry: String(format: "%.1f%%", value * 100)
+        case .bloodOxygen, .doubleSupport, .walkingSteadiness: "\(Int((value * 100).rounded()))%"
         case .systolic, .diastolic, .meanArterialPressure: "\(Int(value.rounded())) mmHg"
         case .respiratoryRate: "\(Int(value.rounded())) /min"
         case .vo2Max: String(format: "%.1f mL/kg/min", value)
-        case .irregularRhythmAlerts, .highHeartRateAlerts, .lowHeartRateAlerts, .ecgRecordings:
+        case .irregularRhythmAlerts, .highHeartRateAlerts, .lowHeartRateAlerts:
             value == 0 ? "None" : "\(Int(value))"
         // The summary is in English, so numbers use en_US separators whatever the phone locale.
         case .steps: "\(Int(value.rounded()).formatted(.number.locale(Locale(identifier: "en_US")))) /day"
@@ -131,6 +131,8 @@ nonisolated struct HealthReport: Sendable {
     var body: BodyProfile? = nil
     /// Day-by-day values from 30 days before joining until today, for the charts.
     var trends: [TrendSeries] = []
+    /// What each ECG taken on the Watch showed, per window. Nil when ECGs aren't shared.
+    var ecg: (before: [ECGResult], recent: [ECGResult])? = nil
 
     static let beforeDays = 30
     static let recentDays = 7
@@ -145,5 +147,21 @@ nonisolated struct HealthReport: Sendable {
     /// Rows with data in at least one window, in the metric's declared order.
     func shown(in section: HealthMetric.Section) -> [MetricReading] {
         readings.filter { $0.metric.section == section && $0.hasData }
+    }
+}
+
+/// What an Apple Watch ECG recording showed, as the Health app words it.
+nonisolated enum ECGResult: String, CaseIterable, Sendable {
+    case sinusRhythm = "sinus rhythm", afib = "AFib", highHeartRate = "inconclusive, high heart rate"
+    case lowHeartRate = "inconclusive, low heart rate", inconclusive = "inconclusive"
+
+    /// "2 sinus rhythm, 1 AFib", most worrying first so it is not missed; "None" without recordings.
+    static func line(_ results: [ECGResult]) -> String {
+        let order: [ECGResult] = [.afib, .highHeartRate, .lowHeartRate, .inconclusive, .sinusRhythm]
+        let parts = order.compactMap { kind -> String? in
+            let n = results.filter { $0 == kind }.count
+            return n == 0 ? nil : "\(n) \(kind.rawValue)"
+        }
+        return parts.isEmpty ? "None" : parts.joined(separator: ", ")
     }
 }
