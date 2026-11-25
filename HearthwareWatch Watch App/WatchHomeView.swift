@@ -265,10 +265,11 @@ struct WatchEmergencyView: View {
                 .tint(red)
                 Text("You can also press and hold the side button for Emergency SOS.")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.white.opacity(0.8))
             }
         }
-        .containerBackground(red.gradient, for: .navigation)
+        // Plain black: containerBackground dims red, and the red button must stand out at full strength.
+        .containerBackground(.black, for: .navigation)
         .onAppear {
             guard !logged else { return }
             logged = true

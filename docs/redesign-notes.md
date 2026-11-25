@@ -49,7 +49,7 @@ Reviewed on an iPhone 17 Pro and an Apple Watch Series 12 (46 mm) simulator, in 
 - Titles are mint (Watch accent), not grey.
 - "You did it": full-strength feeling colour with dark ink (the dimmed gradient made it muddy), and the face settles from before to after.
 - During a step: navy background like the home; past the doctor's limit the orb turns amber at the same time as the words change to "Slow down a little".
-- Not feeling well: urgent rows are red platters with a phone icon and white text.
+- Not feeling well: urgent rows are red platters with a phone icon and white text. "Call 112 now" sits on plain black so the red button is at full strength (the red gradient was dimmed and its footnote hard to read).
 
 ## Test by hand on a real device
 - [ ] Digital Crown haptics in the Watch feeling picker (one detent per feeling).
