@@ -10,12 +10,17 @@ import SwiftUI
 
 struct OnboardingView: View {
     @Environment(AppModel.self) private var model
-    @State private var path: [Page] = []
+    @State private var path: [Page]
     @State private var input = OnboardingInput()
     @FocusState private var focused: Field?
 
     enum Page: Hashable { case name, goal, feeling, condition, health }
     enum Field { case name, customGoal, customCondition }
+
+    /// `start` opens on a later page, for previews.
+    init(start: [Page] = []) {
+        _path = State(initialValue: start)
+    }
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -35,36 +40,36 @@ struct OnboardingView: View {
     // MARK: Welcome
 
     private var welcome: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Container {
-                OrbView(size: 150)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                // The orb breathes on its own: the first thing the app teaches is to slow down.
+                OrbView(size: 160)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 60)
+                    .padding(.vertical, 72)
+                Text("Let's get back\nto your life")
+                    .font(.largeTitle.bold())
+                    .accessibilityAddTraits(.isHeader)
+                Text("After a heart problem, everyday things can feel scary. We'll take them back together, one small step at a time.")
+                    .foregroundStyle(Color.hwSecondary)
+                    .padding(.top, 12)
             }
-            .padding(.top, 24)
-
-            Text("Let's get back\nto your life")
-                .font(.largeTitle.bold())
-                .padding(.top, 32)
-            Text("After a heart problem, everyday things can feel scary. We'll take them back together, one small step at a time.")
-                .font(.body)
-                .foregroundStyle(Color.hwSecondary)
-                .padding(.top, 12)
-
-            Spacer(minLength: 24)
-
+            .padding(.horizontal, Space.screen)
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .safeAreaInset(edge: .bottom) {
             Button("Get started") { path.append(.name) }
                 .buttonStyle(.pill)
+                .padding(.horizontal, Space.screen)
+                .padding(.bottom, 8)
+                .background(Color(uiColor: .systemBackground))
         }
-        .padding(.horizontal, 20)
-        .padding(.bottom, 8)
     }
 
     // MARK: Name
 
     private var namePage: some View {
         QuestionPage(
-            step: "1 of 5",
+            progress: 1,
             title: "What should\nwe call you?",
             subtitle: "We'll use it to greet you and on the summary for your doctor.",
             footnote: "Your name stays on this phone.",
@@ -78,9 +83,7 @@ struct OnboardingView: View {
                 .submitLabel(.continue)
                 .focused($focused, equals: .name)
                 .onSubmit { if input.nameIsValid { path.append(.goal) } }
-                .padding(.horizontal, 20)
-                .frame(minHeight: 52)
-                .background(Color.hwCard, in: .capsule)
+                .capsuleField()
                 .onAppear { focused = .name }
         }
     }
@@ -89,7 +92,7 @@ struct OnboardingView: View {
 
     private var goalPage: some View {
         QuestionPage(
-            step: "2 of 5",
+            progress: 2,
             title: "What do you want\nto get back to?",
             subtitle: "Pick one. We'll start small.",
             footnote: nil,
@@ -108,9 +111,7 @@ struct OnboardingView: View {
                     .textInputAutocapitalization(.sentences)
                     .submitLabel(.done)
                     .focused($focused, equals: .customGoal)
-                    .padding(.horizontal, 20)
-                    .frame(minHeight: 52)
-                    .background(Color.hwCard, in: .capsule)
+                    .capsuleField()
             }
         }
     }
@@ -119,7 +120,8 @@ struct OnboardingView: View {
 
     private var feelingPage: some View {
         FeelingPage(
-            eyebrow: "3 of 5",
+            progress: 3,
+            eyebrow: nil,
             question: "How do you feel about \(goalPhrase) today?",
             footnote: "There is no wrong answer. We'll see this change together.",
             buttonTitle: "Continue",
@@ -138,7 +140,7 @@ struct OnboardingView: View {
 
     private var conditionPage: some View {
         QuestionPage(
-            step: "4 of 5",
+            progress: 4,
             title: "What happened\nto your heart?",
             subtitle: "This helps us explain what you feel.",
             footnote: "We never diagnose. Your doctor always has the last word.",
@@ -157,9 +159,7 @@ struct OnboardingView: View {
                     .textInputAutocapitalization(.sentences)
                     .submitLabel(.done)
                     .focused($focused, equals: .customCondition)
-                    .padding(.horizontal, 20)
-                    .frame(minHeight: 52)
-                    .background(Color.hwCard, in: .capsule)
+                    .capsuleField()
             }
         }
     }
@@ -170,34 +170,22 @@ struct OnboardingView: View {
         // Scrolls on small phones and large text sizes; buttons stay pinned at the bottom.
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                Text("5 of 5")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.hwSecondary)
-                Container {
-                    Image(systemName: "heart.text.square.fill")
-                        .font(.system(size: 64))
-                        .foregroundStyle(Color.hwRed)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 28)
-                        .accessibilityHidden(true)
-                }
-                .padding(.top, 12)
+                StepProgress(current: 5, total: 5)
+                    .padding(.bottom, 16)
                 Text("Show your doctor how far you've come")
                     .font(.largeTitle.bold())
-                    .padding(.top, 28)
-                Text("Steady reads your heart and walking history from Apple Health, including the weeks before today, so your doctor can see the before and after. You'll never see numbers here.")
+                    .accessibilityAddTraits(.isHeader)
+                Text("Steady reads your heart and walking history from Apple Health, including the weeks before today, so your doctor sees the before and after. You'll never see numbers here.")
                     .foregroundStyle(Color.hwSecondary)
-                    .padding(.top, 10)
-                Text("If you measure your blood pressure at home, add it in the Health app too: your doctor will see it.")
-                    .foregroundStyle(Color.hwSecondary)
-                    .padding(.top, 10)
-                Text("Read only. It stays on your phone until you share the summary.")
-                    .font(.subheadline)
-                    .foregroundStyle(Color.hwSecondary)
-                    .padding(.top, 12)
+                    .padding(.top, 8)
+                VStack(alignment: .leading, spacing: 20) {
+                    point("lock.fill", "Read only", "It stays on your phone until you share the summary.")
+                    point("heart.text.clipboard.fill", "Blood pressure at home?", "Add it in the Health app too. Your doctor will see it.")
+                }
+                .padding(.top, 32)
             }
             .fixedSize(horizontal: false, vertical: true)
-            .padding(.horizontal, 20)
+            .padding(.horizontal, Space.screen)
         }
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 12) {
@@ -211,10 +199,25 @@ struct OnboardingView: View {
                 Button("Not now") { finish() }
                     .buttonStyle(.pillSecondary)
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, Space.screen)
             .padding(.bottom, 8)
             .background(Color(uiColor: .systemBackground))
         }
+    }
+
+    private func point(_ symbol: String, _ title: String, _ detail: String) -> some View {
+        HStack(alignment: .top, spacing: 16) {
+            Image(systemName: symbol)
+                .font(.title2)
+                .foregroundStyle(Color.hwMint)
+                .frame(width: 32)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.headline)
+                Text(detail).foregroundStyle(Color.hwSecondary)
+            }
+        }
+        .accessibilityElement(children: .combine)
     }
 
     private func finish() {
