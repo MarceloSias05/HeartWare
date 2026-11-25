@@ -38,6 +38,7 @@ struct WatchStepView: View {
 
 /// The brand orb, sized for the Watch.
 struct WatchOrb: View {
+    var size: CGFloat = 56
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var breathing = false
 
@@ -45,7 +46,7 @@ struct WatchOrb: View {
         Circle()
             .fill(LinearGradient(colors: [Color(red: 0.5, green: 0.9, blue: 0.84), Color(red: 0, green: 0.76, blue: 0.66)],
                                  startPoint: .topLeading, endPoint: .bottomTrailing))
-            .frame(width: 56, height: 56)
+            .frame(width: size, height: size)
             .scaleEffect(breathing ? 1.06 : 0.94)
             .onAppear {
                 guard !reduceMotion else { return }

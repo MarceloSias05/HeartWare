@@ -11,6 +11,8 @@ import WatchKit
 
 private let mint = Color(red: 0, green: 0.76, blue: 0.66)
 private let red = Color(red: 0.84, green: 0, blue: 0.08)
+/// The navy of the app icon. Dark and plain, so the mint and red buttons keep their full contrast.
+private let navy = Color(red: 0.06, green: 0.14, blue: 0.18)
 
 struct WatchRootView: View {
     @Environment(StepWorkout.self) private var workout
@@ -33,37 +35,49 @@ struct WatchHomeView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 10) {
                     if let today = store.today {
-                        Text(today.name.isEmpty ? "Hi" : "Hi \(today.name)")
-                            .font(.headline)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Today's step").font(.footnote).foregroundStyle(.secondary)
-                            Text(today.title).font(.title3.bold())
+                            HStack(spacing: 6) {
+                                WatchOrb(size: 14)
+                                Text(today.bigStep ? "Today's step · a big one" : "Today's step")
+                                    .font(.footnote)
+                                    .foregroundStyle(mint)
+                            }
+                            Text(today.title)
+                                .font(.title3.bold())
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                         .accessibilityElement(children: .combine)
                         NavigationLink {
                             WatchStepFlowView(today: today)
                         } label: {
                             Label("Start step", systemImage: "figure.walk")
+                                .font(.headline)
+                                .foregroundStyle(navy)
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(mint)
                     } else {
+                        WatchOrb(size: 40)
                         Text("Open Steady on your iPhone to set up your first step.")
                             .font(.headline)
                     }
+                    // Red and with words, like on the iPhone, so it is never missed.
                     NavigationLink {
                         WatchHelpView()
                     } label: {
-                        Label("Not feeling well", systemImage: "heart.text.square")
+                        Label("Not feeling well", systemImage: "heart.text.square.fill")
+                            .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                     }
+                    .buttonStyle(.borderedProminent)
                     .tint(red)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .navigationTitle("Steady")
-            .containerBackground(mint.gradient, for: .navigation)
+            // The greeting is the title: one row less, so both buttons fit on the first screen.
+            .navigationTitle(store.today.map { $0.name.isEmpty ? "Steady" : "Hi \($0.name)" } ?? "Steady")
+            .containerBackground(navy, for: .navigation)
         }
     }
 }
